@@ -1,6 +1,9 @@
-/* Ledgerline service worker — caches the app shell so it runs fully offline
-   after the first load, and keeps working even when nothing is serving it. */
-const CACHE = 'ledgerline-v1';
+/* Ledgerline service worker
+   - HTML pages: network-first (so app updates appear on reload when online),
+     falling back to cache when offline.
+   - Icons/manifest/other static files: cache-first for speed & offline.
+   Bumping CACHE forces a clean refresh of everything. */
+const CACHE = 'ledgerline-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -19,12 +22,31 @@ self.addEventListener('activate', e => {
       .then(() => self.clients.claim())
   );
 });
+function isHTML(req) {
+  return req.mode === 'navigate' ||
+    (req.headers.get('accept') || '').includes('text/html');
+}
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
+  if (isHTML(req)) {
+    // network-first: always try to get the latest page, fall back to cache offline
+    e.respondWith(
+      fetch(req).then(res => {
+        try {
+          if (res && res.status === 200 && new URL(req.url).origin === self.location.origin) {
+            const copy = res.clone();
+            caches.open(CACHE).then(c => c.put('./index.html', copy));
+          }
+        } catch (_) {}
+        return res;
+      }).catch(() => caches.match(req).then(hit => hit || caches.match('./index.html')))
+    );
+    return;
+  }
+  // cache-first for static assets
   e.respondWith(
     caches.match(req).then(hit => hit || fetch(req).then(res => {
-      // cache same-origin successful responses for next time
       try {
         if (res && res.status === 200 && new URL(req.url).origin === self.location.origin) {
           const copy = res.clone();
@@ -32,6 +54,6 @@ self.addEventListener('fetch', e => {
         }
       } catch (_) {}
       return res;
-    }).catch(() => caches.match('./index.html')))
+    }).catch(() => hit))
   );
 });

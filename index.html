@@ -811,7 +811,7 @@ function fileToLogo(file,cb){
 }
 
 function renderInvoiceDoc(inv){
-  const s=inv.seller; const c=inv.customerSnap; const cur=inv.currency;
+  const s=inv.seller||snapshotSeller(profileById(inv.profileId)||P()); const c=inv.customerSnap||snapshotCustomer(customer(inv.customerId)); const cur=inv.currency;
   const t=inv.totals||computeTotals(inv); const pos=invoicePosition(inv);
   const ds=dueState(inv);
   let stamp='';
@@ -1657,6 +1657,7 @@ function openInvoiceDetail(id){
         ${issued&&pos.payStatus!=='paid'?`<button class="btn" id="dRemind">${icon('msg',15)}Reminder</button>`:''}
         ${issued?`<button class="btn" id="dCredit">${icon('doc',15)}Credit note</button>`:''}
         ${issued&&inv.lifecycle!=='void'?`<button class="btn danger" id="dVoid">Void</button>`:''}
+        ${inv.lifecycle==='draft'?`<button class="btn danger" id="dDelete">${icon('x',15)}Delete draft</button>`:''}
       </div>
       <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start">
         <div style="flex:2;min-width:300px" class="doc-scroll" id="invPaper"></div>
@@ -1666,10 +1667,12 @@ function openInvoiceDetail(id){
         </div>
       </div>`,
     onMount:(b,close)=>{
-      $('#invPaper').innerHTML=renderInvoiceDoc(inv);
+      try{$('#invPaper').innerHTML=renderInvoiceDoc(inv);}
+      catch(err){$('#invPaper').innerHTML='<div class="empty" style="padding:24px">Preview unavailable for this draft — you can still edit, issue, or delete it.</div>';}
       const paperHTML=()=>$('#invPaper .paper').outerHTML;
       $('#dPrint')&&($('#dPrint').onclick=()=>printDoc(paperHTML()));
-      $('#dDl')&&($('#dDl').onclick=()=>{markDelivered(inv,'download');downloadFile((inv.number||'invoice')+'.html',standaloneDoc('Invoice '+inv.number,paperHTML()));toast('Downloaded');refreshDetail(id,close);});
+      $('#dDl')&&($('#dDl').onclick=()=>{markDelivered(inv,'download');downloadFile((inv.number||'draft-invoice')+'.html',standaloneDoc('Invoice '+(inv.number||'(draft)'),paperHTML()));toast('Downloaded');refreshDetail(id,close);});
+      $('#dDelete')&&($('#dDelete').onclick=()=>confirmModal('Delete draft','Delete this draft invoice? It has no invoice number and nothing has been sent, so this is safe to remove. This cannot be undone.',()=>{DB.invoices=DB.invoices.filter(x=>x.id!==inv.id);audit('invoice.draft.delete','draft removed',inv.id);commit();close();renderView();toast('Draft deleted');},true));
       $('#dSend')&&($('#dSend').onclick=()=>openSendDialog(inv,'invoice',()=>refreshDetail(id,close)));
       $('#dPay')&&($('#dPay').onclick=()=>{close();openPaymentEditor(null,{invoiceId:inv.id});});
       $('#dEdit')&&($('#dEdit').onclick=()=>{close();openInvoiceEditor(inv.id);});

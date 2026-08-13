@@ -1,0 +1,80 @@
+LEDGERLINE — how to install it as a real app
+=============================================
+
+Ledgerline is one self-contained web app. It stores everything on YOUR device
+and works fully offline. You only need to open it from an address ONCE so the
+browser will let you "Install" it — browsers block install for files opened
+straight from disk, which is why Chrome's "Create shortcut" option was greyed out.
+
+Pick ONE of the routes below.
+
+
+ROUTE A — GitHub Pages: free, permanent link (also puts it on your iPhone)
+--------------------------------------------------------------------------
+The link never expires. ~5 minutes. Needs a free GitHub account.
+
+1. Sign in (or sign up free) at  https://github.com
+2. Create a new repository:
+      - Click the "+" (top-right) -> "New repository"
+      - Name it:  ledgerline
+      - Set it to PUBLIC  (Pages is free on public repos; none of your invoice
+        DATA is in these files, only the app itself, so public is fine)
+      - Click "Create repository"
+3. Upload the app files:
+      - On the new repo page click "uploading an existing file"
+        (or  Add file -> Upload files)
+      - Drag in these files from this folder:
+            index.html
+            manifest.webmanifest
+            sw.js
+            icon-192.png
+            icon-512.png
+            icon-maskable-512.png
+            apple-touch-icon-180.png
+        (You do NOT need to upload the .bat/.command/.ps1/READ ME files.)
+      - Click "Commit changes"
+4. Turn on Pages:
+      - In the repo, go to  Settings -> Pages  (left sidebar)
+      - Under "Build and deployment" -> Source: choose "Deploy from a branch"
+      - Branch: main  /  folder: / (root)  ->  Save
+5. Wait ~1 minute, then refresh. Pages shows your live URL:
+            https://YOUR-USERNAME.github.io/ledgerline/
+6. Install it:
+      - DESKTOP (Chrome/Edge): open that URL, then click the Install icon at the
+        right of the address bar (a small monitor icon) -> Install.
+      - iPHONE/iPad (Safari): open the same URL, tap Share -> "Add to Home Screen".
+
+The site only delivers the app. After install it runs offline and everything you
+enter stays on that device. To update the app later, upload a new index.html to
+the same repo and it refreshes automatically.
+
+
+ROUTE B — Run it locally, no website  (desktop only, nothing to install)
+------------------------------------------------------------------------
+No Python needed. Windows uses its built-in PowerShell; Mac uses a web server
+that already ships with macOS.
+
+1. Double-click:
+      Windows:  "Start Ledgerline (Windows).bat"
+      Mac:      "Start Ledgerline (Mac).command"
+   (First time on Mac, it may say it's from an unidentified developer:
+    right-click the file -> Open -> Open. You only do this once.
+    First time on Windows, if you see a blue "Windows protected your PC" box,
+    click "More info" -> "Run anyway".)
+2. Your browser opens  http://localhost:8756/  automatically.
+3. In Chrome/Edge, click the Install icon in the address bar -> Install.
+4. After installing you can CLOSE the little server window — the app was cached,
+   so it keeps opening offline from its own icon.
+
+
+ROUTE C — Just use it, no install
+---------------------------------
+Double-click  index.html  to open it in your browser. Fully works and saves
+locally; you just won't get a standalone app icon.
+
+
+KEEP YOUR DATA SAFE
+-------------------
+Data is stored separately for each place you install it (each URL / each device).
+Now and then open  Settings -> Backup & data -> Download backup  to save a JSON
+file you can restore anywhere. If you use Route B or C, keep this folder in place.
