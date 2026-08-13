@@ -1,0 +1,2394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#12161f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ledgerline">
+<meta name="application-name" content="Ledgerline">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" href="apple-touch-icon-180.png">
+<title>Ledgerline — Multi-Business Invoicing</title>
+<style>
+/* ============================================================
+   LEDGERLINE — design system
+   A precise, ledger-grade receivables workspace.
+   Dark command rail + paper-white document workspace.
+   Per-profile accent repaints the app to prevent misbilling.
+   ============================================================ */
+:root{
+  --ink:#12161f; --ink-2:#1a2030; --ink-3:#232b3d; --rail-line:#2c3550;
+  --paper:#ffffff; --wash:#f4f6fb; --wash-2:#eaeef7; --line:#dde3ef; --line-2:#c7d0e3;
+  --text:#1a2233; --muted:#5b6784; --faint:#8a95ad; --inverse:#e8ecf6;
+  --accent:#3b5bdb; --accent-ink:#ffffff; --accent-wash:#eef2ff; --accent-line:#c3d0f7;
+  --ok:#12805c; --ok-wash:#e6f6ef; --warn:#b26a00; --warn-wash:#fdf3e2;
+  --bad:#c0392b; --bad-wash:#fdecea; --info:#2b6cb0;
+  --radius:11px; --radius-s:8px; --radius-l:16px;
+  --shadow:0 1px 2px rgba(17,22,31,.06),0 8px 24px -12px rgba(17,22,31,.18);
+  --shadow-lg:0 24px 60px -24px rgba(17,22,31,.4);
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,"Cascadia Mono","Roboto Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{font-family:var(--sans);color:var(--text);background:var(--wash);
+  font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:14px}
+.mono,.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+.money{font-variant-numeric:tabular-nums;white-space:nowrap}
+h1,h2,h3,h4{margin:0;font-weight:640;letter-spacing:-.01em;color:var(--text)}
+a{color:var(--accent);text-decoration:none}
+::selection{background:var(--accent-wash)}
+:focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+/* ---------- App frame ---------- */
+#app{display:flex;min-height:100vh}
+.rail{width:236px;flex:0 0 236px;background:var(--ink);color:var(--inverse);
+  display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow:hidden;z-index:40}
+.rail-top{padding:16px 16px 10px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:700;letter-spacing:-.02em;font-size:16px;color:#fff}
+.brand .glyph{width:26px;height:26px;border-radius:7px;background:var(--accent);display:grid;place-items:center;
+  color:#fff;font-weight:800;font-size:13px;flex:0 0 26px;transition:background .25s}
+.brand small{display:block;font-weight:500;font-size:10.5px;color:var(--faint);letter-spacing:.02em;margin-top:1px}
+
+/* profile switcher — the signature element */
+.psw{margin:12px 12px 4px;position:relative}
+.psw-btn{width:100%;text-align:left;background:var(--ink-2);border:1px solid var(--rail-line);
+  border-radius:var(--radius-s);padding:9px 10px;color:var(--inverse);display:flex;align-items:center;gap:9px;
+  transition:border-color .2s,background .2s}
+.psw-btn:hover{background:var(--ink-3)}
+.psw-dot{width:12px;height:12px;border-radius:4px;background:var(--accent);flex:0 0 12px;box-shadow:0 0 0 3px rgba(255,255,255,.06)}
+.psw-txt{min-width:0;flex:1}
+.psw-name{font-weight:640;font-size:12.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.psw-legal{font-size:10.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.psw-car{color:var(--faint);flex:0 0 auto}
+.psw-menu{position:absolute;left:0;right:0;top:calc(100% + 6px);background:var(--ink-2);
+  border:1px solid var(--rail-line);border-radius:var(--radius-s);box-shadow:var(--shadow-lg);
+  z-index:60;padding:5px;max-height:60vh;overflow:auto}
+.psw-item{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:6px;cursor:pointer}
+.psw-item:hover{background:var(--ink-3)}
+.psw-item.on{background:var(--ink-3)}
+.psw-item .psw-name{font-size:12px}
+.psw-item .arch{font-size:9px;color:var(--warn);border:1px solid var(--warn);border-radius:4px;padding:0 4px;margin-left:auto}
+.psw-all{border-top:1px solid var(--rail-line);margin-top:4px;padding-top:6px}
+
+nav.menu{padding:8px 10px;flex:1;overflow:auto}
+.mgroup{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--faint);
+  padding:12px 8px 5px;font-weight:640}
+.mitem{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:7px;color:#cdd5e8;
+  font-size:13px;font-weight:520;position:relative;transition:background .15s,color .15s;margin:1px 0}
+.mitem:hover{background:var(--ink-2);color:#fff}
+.mitem.on{background:var(--ink-2);color:#fff}
+.mitem.on::before{content:"";position:absolute;left:-10px;top:50%;transform:translateY(-50%);
+  width:3px;height:18px;border-radius:0 3px 3px 0;background:var(--accent)}
+.mitem svg{flex:0 0 17px;color:var(--faint)}
+.mitem.on svg,.mitem:hover svg{color:var(--accent)}
+.mitem .cnt{margin-left:auto;font-size:11px;background:var(--ink-3);color:#b9c2da;border-radius:20px;
+  padding:1px 7px;font-variant-numeric:tabular-nums}
+.mitem .cnt.alert{background:var(--bad);color:#fff}
+.rail-foot{padding:10px 12px;border-top:1px solid var(--rail-line);font-size:11px;color:var(--faint)}
+.sync-pill{display:flex;align-items:center;gap:7px;background:var(--ink-2);border-radius:20px;padding:6px 10px;margin-bottom:8px}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--warn)}
+.sync-dot.local{background:#7c8bb0}
+
+/* ---------- Main ---------- */
+main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:30;background:rgba(244,246,251,.86);backdrop-filter:saturate(1.2) blur(10px);
+  border-bottom:1px solid var(--line);padding:12px 22px;display:flex;align-items:center;gap:14px}
+.crumb{font-size:12px;color:var(--muted);font-weight:560}
+.crumb b{color:var(--text);font-weight:680}
+.topbar .search{margin-left:auto;position:relative}
+.topbar .search input{width:230px;padding:8px 11px 8px 32px;border:1px solid var(--line);border-radius:20px;
+  background:var(--paper);color:var(--text)}
+.topbar .search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--faint)}
+.content{padding:22px;max-width:1200px;width:100%;margin:0 auto;flex:1}
+
+/* ---------- Buttons ---------- */
+.btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line-2);background:var(--paper);
+  color:var(--text);border-radius:var(--radius-s);padding:8px 13px;font-weight:600;font-size:13px;
+  transition:all .15s;white-space:nowrap}
+.btn:hover{border-color:var(--faint);box-shadow:var(--shadow)}
+.btn svg{flex:0 0 auto}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.06);box-shadow:0 6px 18px -6px var(--accent)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{background:var(--wash-2);color:var(--text);box-shadow:none}
+.btn.sm{padding:5px 9px;font-size:12px;border-radius:6px}
+.btn.danger{color:var(--bad);border-color:var(--bad-wash)}
+.btn.danger:hover{background:var(--bad-wash);border-color:var(--bad)}
+.btn:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+.btn-row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+
+/* ---------- Cards / layout ---------- */
+.page-head{display:flex;align-items:flex-end;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.page-head h1{font-size:22px}
+.page-head .sub{color:var(--muted);font-size:13px;margin-top:3px}
+.page-head .spacer{flex:1}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.card.pad{padding:18px}
+.grid{display:grid;gap:14px}
+.g4{grid-template-columns:repeat(4,1fr)} .g3{grid-template-columns:repeat(3,1fr)} .g2{grid-template-columns:repeat(2,1fr)}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:15px 16px;box-shadow:var(--shadow)}
+.stat .lbl{font-size:11.5px;color:var(--muted);font-weight:580;letter-spacing:.01em;display:flex;align-items:center;gap:6px}
+.stat .val{font-size:25px;font-weight:700;margin-top:7px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat .foot{font-size:11.5px;color:var(--faint);margin-top:3px}
+.stat.accent{border-color:var(--accent-line);background:linear-gradient(180deg,var(--accent-wash),var(--paper))}
+.stat.accent .val{color:var(--accent)}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+/* ---------- Table ---------- */
+.tbl-wrap{overflow:auto;border-radius:var(--radius)}
+table.data{width:100%;border-collapse:collapse;font-size:13px}
+table.data th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
+  font-weight:640;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--wash);position:sticky;top:0}
+table.data td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.data tr:last-child td{border-bottom:none}
+table.data tbody tr{cursor:pointer;transition:background .12s}
+table.data tbody tr:hover{background:var(--wash)}
+table.data .r{text-align:right} table.data .c{text-align:center}
+.linkish{color:var(--accent);font-weight:620}
+.subrow td{background:var(--wash);font-size:12px;color:var(--muted)}
+.empty{text-align:center;padding:46px 20px;color:var(--muted)}
+.empty svg{color:var(--line-2);margin-bottom:10px}
+.empty h3{color:var(--text);margin-bottom:5px;font-size:15px}
+
+/* ---------- Badges / chips ---------- */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:640;padding:2.5px 8px;border-radius:20px;
+  border:1px solid transparent;letter-spacing:.01em;white-space:nowrap}
+.badge .dt{width:6px;height:6px;border-radius:50%}
+.b-gray{background:var(--wash-2);color:var(--muted)}
+.b-blue{background:var(--accent-wash);color:var(--accent);border-color:var(--accent-line)}
+.b-green{background:var(--ok-wash);color:var(--ok)}
+.b-amber{background:var(--warn-wash);color:var(--warn)}
+.b-red{background:var(--bad-wash);color:var(--bad)}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:560;padding:3px 9px;border-radius:7px;
+  background:var(--wash-2);color:var(--muted);border:1px solid var(--line)}
+
+/* ---------- Forms ---------- */
+.field{margin-bottom:14px}
+.field > label{display:block;font-size:12px;font-weight:620;color:var(--text);margin-bottom:5px}
+.field .hint{font-size:11px;color:var(--faint);font-weight:400;margin-top:4px}
+.field .req{color:var(--bad)}
+.inp,select.inp,textarea.inp{width:100%;padding:9px 11px;border:1px solid var(--line-2);border-radius:var(--radius-s);
+  background:var(--paper);color:var(--text);transition:border-color .15s,box-shadow .15s}
+.inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-wash);outline:none}
+textarea.inp{resize:vertical;min-height:64px;line-height:1.5}
+.inp.right{text-align:right;font-variant-numeric:tabular-nums}
+.frow{display:grid;gap:12px}
+.frow.c2{grid-template-columns:1fr 1fr} .frow.c3{grid-template-columns:1fr 1fr 1fr}
+.frow.c4{grid-template-columns:1fr 1fr 1fr 1fr}
+.inp-group{display:flex;align-items:stretch}
+.inp-group .pre{display:flex;align-items:center;padding:0 10px;background:var(--wash-2);border:1px solid var(--line-2);
+  border-right:none;border-radius:var(--radius-s) 0 0 var(--radius-s);color:var(--muted);font-size:13px;font-weight:600}
+.inp-group .inp{border-radius:0 var(--radius-s) var(--radius-s) 0}
+.check{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;user-select:none}
+.check input{width:16px;height:16px;accent-color:var(--accent)}
+.seg{display:inline-flex;background:var(--wash-2);border-radius:var(--radius-s);padding:3px;gap:2px;border:1px solid var(--line)}
+.seg button{border:none;background:transparent;padding:6px 12px;border-radius:6px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.seg button.on{background:var(--paper);color:var(--text);box-shadow:var(--shadow)}
+
+/* filters bar */
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.toolbar .seg{margin:0}
+.toolbar select.inp,.toolbar input.inp{width:auto;padding:7px 10px}
+
+/* ---------- Modal ---------- */
+.scrim{position:fixed;inset:0;background:rgba(15,20,32,.5);backdrop-filter:blur(3px);z-index:100;
+  display:flex;align-items:flex-start;justify-content:center;padding:28px 16px;overflow:auto}
+.modal{background:var(--paper);border-radius:var(--radius-l);box-shadow:var(--shadow-lg);width:100%;max-width:720px;
+  margin:auto;animation:pop .18s ease}
+.modal.wide{max-width:1000px} .modal.narrow{max-width:480px}
+@keyframes pop{from{transform:translateY(8px) scale(.99);opacity:0}to{transform:none;opacity:1}}
+.mhead{display:flex;align-items:center;gap:12px;padding:18px 22px;border-bottom:1px solid var(--line);position:sticky;top:0;
+  background:var(--paper);border-radius:var(--radius-l) var(--radius-l) 0 0;z-index:2}
+.mhead h2{font-size:17px} .mhead .mh-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.mhead .x{margin-left:auto;background:var(--wash-2);border:none;width:32px;height:32px;border-radius:8px;color:var(--muted);
+  display:grid;place-items:center}
+.mhead .x:hover{background:var(--wash);color:var(--text)}
+.mbody{padding:22px}
+.mfoot{padding:14px 22px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:center;position:sticky;bottom:0;
+  background:var(--paper);border-radius:0 0 var(--radius-l) var(--radius-l)}
+.mfoot .spacer{flex:1}
+
+/* line item editor */
+.li-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.li-tbl th{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:left;padding:6px 6px;font-weight:640}
+.li-tbl td{padding:4px 5px;vertical-align:top}
+.li-tbl .inp{padding:7px 8px}
+.li-tbl .liq{width:66px} .li-tbl .lir{width:104px} .li-tbl .lit{width:96px}
+.li-del{background:transparent;border:none;color:var(--faint);padding:6px;border-radius:6px}
+.li-del:hover{background:var(--bad-wash);color:var(--bad)}
+.totbox{margin-left:auto;width:320px;max-width:100%}
+.totrow{display:flex;justify-content:space-between;padding:5px 0;font-size:13px}
+.totrow.grand{border-top:2px solid var(--text);margin-top:6px;padding-top:9px;font-size:17px;font-weight:700}
+.totrow.bal{color:var(--accent);font-weight:700}
+.totrow .money{font-variant-numeric:tabular-nums}
+
+/* ---------- Document / paper preview ---------- */
+.doc-scroll{background:var(--wash-2);padding:0;max-height:none}
+.paper{background:#fff;color:#111;width:100%;max-width:820px;margin:0 auto;padding:44px 46px;
+  font-size:13px;line-height:1.5;box-shadow:var(--shadow)}
+.paper .d-top{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;margin-bottom:26px}
+.paper .d-logo{width:56px;height:56px;border-radius:11px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:22px}
+.paper .d-seller h2{font-size:17px;margin-bottom:2px}
+.paper .d-seller .op{font-size:12px;color:#555;font-style:italic}
+.paper .d-seller p{margin:2px 0;color:#444;font-size:12px}
+.paper .d-meta{text-align:right}
+.paper .d-meta .d-type{font-size:26px;font-weight:800;letter-spacing:-.02em;text-transform:uppercase}
+.paper .d-meta table{margin-left:auto;font-size:12px;border-collapse:collapse}
+.paper .d-meta td{padding:2px 0 2px 16px;text-align:right} .paper .d-meta td.k{color:#666}
+.paper .d-paidstamp{display:inline-block;border:3px solid var(--ok);color:var(--ok);font-weight:800;font-size:18px;
+  padding:3px 14px;border-radius:8px;transform:rotate(-6deg);letter-spacing:.05em;text-transform:uppercase}
+.paper .d-overstamp{border-color:var(--bad);color:var(--bad)}
+.paper .bill-to{display:flex;justify-content:space-between;gap:24px;margin:20px 0}
+.paper .bill-to .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#888;font-weight:700;margin-bottom:4px}
+.paper .bill-to b{font-size:14px}
+.paper table.lines{width:100%;border-collapse:collapse;margin:14px 0}
+.paper table.lines th{background:#f3f4f8;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;
+  color:#555;padding:9px 10px;border-bottom:2px solid #222}
+.paper table.lines th.r,.paper table.lines td.r{text-align:right}
+.paper table.lines td{padding:10px;border-bottom:1px solid #e6e8ef;vertical-align:top;font-variant-numeric:tabular-nums}
+.paper table.lines .desc b{display:block;font-size:13px} .paper table.lines .desc small{color:#777}
+.paper .d-tot{margin-left:auto;width:290px;margin-top:14px}
+.paper .d-tot .tr{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;font-variant-numeric:tabular-nums}
+.paper .d-tot .tr.grand{border-top:2px solid #222;margin-top:5px;padding-top:9px;font-size:17px;font-weight:800}
+.paper .d-tot .tr.paidln{color:var(--ok)} .paper .d-tot .tr.balln{font-weight:800;font-size:16px;color:#111;border-top:1px dashed #bbb;margin-top:4px;padding-top:8px}
+.paper .d-note{margin-top:26px;padding-top:16px;border-top:1px solid #e6e8ef;color:#555;font-size:12px}
+.paper .d-note h4{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#888;margin-bottom:5px}
+.paper .d-pay{background:#f7f8fb;border:1px solid #e6e8ef;border-radius:10px;padding:12px 14px;margin-top:14px;font-size:12px}
+.paper .d-hist{margin-top:14px;font-size:12px;width:100%;border-collapse:collapse}
+.paper .d-hist th{text-align:left;color:#888;font-size:10px;text-transform:uppercase;padding:4px 8px;border-bottom:1px solid #ddd}
+.paper .d-hist td{padding:5px 8px;border-bottom:1px solid #f0f0f0;font-variant-numeric:tabular-nums}
+.paper .d-foot{margin-top:30px;text-align:center;color:#999;font-size:11px}
+.watermark{position:relative}
+.watermark::after{content:attr(data-wm);position:absolute;inset:0;display:grid;place-items:center;
+  font-size:92px;font-weight:900;color:rgba(0,0,0,.05);transform:rotate(-24deg);pointer-events:none;letter-spacing:.1em}
+
+/* timeline */
+.timeline{position:relative;padding-left:22px}
+.timeline::before{content:"";position:absolute;left:6px;top:4px;bottom:4px;width:2px;background:var(--line)}
+.tl-item{position:relative;padding:0 0 16px 0}
+.tl-item::before{content:"";position:absolute;left:-19px;top:3px;width:11px;height:11px;border-radius:50%;
+  background:#fff;border:2.5px solid var(--accent)}
+.tl-item .tl-time{font-size:11px;color:var(--faint)}
+.tl-item .tl-txt{font-size:13px;margin-top:1px}
+.tl-item .tl-txt b{font-weight:640}
+
+/* toast */
+#toasts{position:fixed;bottom:20px;right:20px;z-index:200;display:flex;flex-direction:column;gap:9px;max-width:340px}
+.toast{background:var(--ink);color:#fff;padding:11px 15px;border-radius:10px;box-shadow:var(--shadow-lg);
+  font-size:13px;display:flex;align-items:center;gap:10px;animation:slidein .2s ease}
+.toast .tdot{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:0 0 8px}
+.toast.err .tdot{background:var(--bad)} .toast.warn .tdot{background:var(--warn)}
+@keyframes slidein{from{transform:translateX(20px);opacity:0}to{transform:none;opacity:1}}
+
+/* misc */
+.help{background:var(--accent-wash);border:1px solid var(--accent-line);border-radius:var(--radius);padding:12px 14px;
+  font-size:12.5px;color:var(--text);display:flex;gap:10px;margin-bottom:16px}
+.help svg{flex:0 0 auto;color:var(--accent);margin-top:1px}
+.warnbox{background:var(--warn-wash);border:1px solid #f0d9a8;color:#7a4e00;border-radius:var(--radius);padding:11px 14px;
+  font-size:12.5px;display:flex;gap:10px;margin-bottom:14px}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:6px 14px;font-size:13px}
+.kv dt{color:var(--muted);font-weight:560} .kv dd{margin:0;font-weight:560}
+hr.sep{border:none;border-top:1px solid var(--line);margin:18px 0}
+.pill-tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:18px}
+.pill-tabs button{background:none;border:none;padding:9px 14px;font-size:13px;font-weight:600;color:var(--muted);
+  border-bottom:2px solid transparent;margin-bottom:-1px}
+.pill-tabs button.on{color:var(--accent);border-bottom-color:var(--accent)}
+.mobonly{display:none}
+.allocrow{display:grid;grid-template-columns:1fr 120px 130px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.progress{height:6px;background:var(--wash-2);border-radius:6px;overflow:hidden;margin-top:6px}
+.progress > i{display:block;height:100%;background:var(--ok);border-radius:6px}
+
+/* ---------- Responsive ---------- */
+@media(max-width:940px){
+  .rail{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .22s;box-shadow:var(--shadow-lg)}
+  .rail.open{transform:none}
+  .g4{grid-template-columns:1fr 1fr} .g3{grid-template-columns:1fr}
+  .mobonly{display:inline-flex}
+  .topbar .search input{width:150px}
+  .frow.c2,.frow.c3,.frow.c4{grid-template-columns:1fr}
+  .content{padding:16px}
+  .scrim{padding:0}
+  .modal{max-width:100%;min-height:100%;border-radius:0;margin:0}
+  .mhead,.mfoot{border-radius:0}
+  .paper{padding:24px 18px}
+}
+@media(max-width:560px){ .g4{grid-template-columns:1fr} .allocrow{grid-template-columns:1fr}
+  .totbox{width:100%} }
+
+/* ---------- Print ---------- */
+@media print{
+  @page{margin:14mm}
+  body{background:#fff}
+  #app > .rail,.topbar,#toasts,.mfoot,.mhead .x,.doc-actions{display:none !important}
+  #app,main,.content{display:block;padding:0;margin:0;max-width:none}
+  .scrim{position:static;background:none;padding:0;display:block;overflow:visible}
+  .modal{box-shadow:none;max-width:none;border-radius:0;margin:0}
+  .mbody{padding:0}
+  .doc-scroll{background:#fff;padding:0}
+  .paper{box-shadow:none;max-width:none;padding:0;margin:0;width:100%}
+  .no-print{display:none !important}
+}
+</style>
+</head>
+<body>
+<div id="app"><!-- rendered by JS --></div>
+<div id="modal-root"></div>
+<div id="toasts"></div>
+<script>
+/* ============================================================================
+   LEDGERLINE — Multi-Business Invoice & Receipt application
+   Single-file, offline-first operational receivables ledger.
+   Financial core: integer minor-unit money, append-only payment events,
+   computed (never stored) balances, immutable issued snapshots,
+   strict per-profile isolation.
+   ============================================================================ */
+"use strict";
+/* __JS_BODY__ */
+
+/* ========================= ICONS ========================= */
+const ICON = {
+  home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>',
+  sales:'<path d="M4 4h16v13H4z"/><path d="M8 9h8M8 13h5"/><path d="M9 21h6"/>',
+  pay:'<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/>',
+  cust:'<circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16 6.5a3 3 0 0 1 0 6M18.5 20a5 5 0 0 0-3-4.6"/>',
+  cat:'<path d="m12 2 8 4.5v11L12 22l-8-4.5v-11z"/><path d="m4 6.5 8 4.5 8-4.5M12 22V11"/>',
+  rep:'<path d="M4 20V4M4 20h16"/><rect x="7" y="11" width="3" height="6"/><rect x="12" y="7" width="3" height="10"/><rect x="17" y="13" width="3" height="4"/>',
+  msg:'<path d="M4 5h16v11H8l-4 4z"/>',
+  set:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  print:'<path d="M6 9V3h12v6"/><rect x="4" y="9" width="16" height="8" rx="1"/><path d="M8 17h8v4H8z"/>',
+  mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
+  sms:'<path d="M4 5h16v11H8l-4 4z"/><path d="M8 10h8M8 13h5"/>',
+  share:'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.5 10.5 7-4M8.5 13.5l7 4"/>',
+  dl:'<path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 21h16"/>',
+  copy:'<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/>',
+  x:'<path d="M6 6l12 12M18 6 6 18"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+  chev:'<path d="m6 9 6 6 6-6"/>',
+  check:'<path d="m5 12 5 5 9-11"/>',
+  edit:'<path d="M4 20h4L20 8l-4-4L4 16z"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  alert:'<path d="M12 3 2 20h20z"/><path d="M12 9v5M12 17.5v.5"/>',
+  info:'<circle cx="12" cy="12" r="9"/><path d="M12 8v.5M12 11v5"/>',
+  bank:'<path d="M3 9l9-5 9 5"/><path d="M4 9v9M9 9v9M15 9v9M20 9v9M3 21h18"/>',
+  doc:'<path d="M6 2h8l4 4v16H6z"/><path d="M14 2v4h4"/>',
+  arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+  menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
+  refresh:'<path d="M4 12a8 8 0 0 1 14-5l2 2M20 12a8 8 0 0 1-14 5l-2-2"/><path d="M18 3v4h-4M6 21v-4h4"/>',
+  ship:'<path d="M3 13h18l-2 6H5z"/><path d="M6 13V7h9l3 3v3"/><circle cx="8" cy="19" r="0"/>',
+  scissors:'<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8 8l12 8M8 16l12-8"/>',
+  trend:'<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+  trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+};
+function icon(name,size){size=size||18;return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICON[name]||''}</svg>`;}
+
+/* ========================= UTIL ========================= */
+const $ = (s,r)=> (r||document).querySelector(s);
+const $$ = (s,r)=> Array.from((r||document).querySelectorAll(s));
+function uid(p){return (p||'id')+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function nowISO(){return new Date().toISOString();}
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function addDays(dateStr,n){const d=new Date(dateStr+'T00:00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);}
+function daysBetween(a,b){return Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);}
+function fmtDate(s){if(!s)return '—';const d=new Date((s.length<=10?s+'T00:00:00':s));return d.toLocaleDateString('en-CA',{year:'numeric',month:'short',day:'numeric'});}
+function fmtDateTime(s){if(!s)return '—';return new Date(s).toLocaleString('en-CA',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});}
+function timeAgo(s){const d=(Date.now()-new Date(s))/1000;if(d<60)return'just now';if(d<3600)return Math.floor(d/60)+'m ago';if(d<86400)return Math.floor(d/3600)+'h ago';return Math.floor(d/86400)+'d ago';}
+function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);};}
+
+/* ---- Currency & money (integer minor units; no binary float for money) ---- */
+const CURRENCIES = {
+  CAD:{sym:'$',code:'CAD',dec:2,name:'Canadian Dollar'},
+  USD:{sym:'$',code:'USD',dec:2,name:'US Dollar'},
+  NGN:{sym:'₦',code:'NGN',dec:2,name:'Nigerian Naira'},
+  GBP:{sym:'£',code:'GBP',dec:2,name:'British Pound'},
+  EUR:{sym:'€',code:'EUR',dec:2,name:'Euro'},
+};
+function ccy(c){return CURRENCIES[c]||CURRENCIES.CAD;}
+// parse a user string ("1,250.50") into integer minor units for the currency
+function toMinor(val,cur){
+  const c=ccy(cur);const n=String(val==null?'':val).replace(/[^0-9.\-]/g,'');
+  if(n===''||n==='-'||n==='.')return 0;
+  const f=Math.round(parseFloat(n)*Math.pow(10,c.dec));
+  return Number.isFinite(f)?f:0;
+}
+// integer minor units -> decimal string
+function minorToStr(m,cur){const c=ccy(cur);return (m/Math.pow(10,c.dec)).toFixed(c.dec);}
+// format money for display
+function money(m,cur,opts){
+  opts=opts||{};const c=ccy(cur);
+  const neg=m<0;const abs=Math.abs(m);
+  const s=(abs/Math.pow(10,c.dec)).toLocaleString('en-CA',{minimumFractionDigits:c.dec,maximumFractionDigits:c.dec});
+  const out=(opts.sign&&!neg&&m!==0?'+':'')+(neg?'-':'')+c.sym+s+(opts.code?' '+c.code:'');
+  return out;
+}
+// multiply integer minor by a decimal quantity/rate, returning integer minor (banker-safe rounding)
+function mulMinor(minor,qty){return Math.round(minor*qty);}
+// percentage of an integer minor amount
+function pctMinor(minor,pct){return Math.round(minor*(pct/100));}
+
+/* ---- Number parsing for quantities/rates (decimal, not money) ---- */
+function num(v,def){const n=parseFloat(String(v==null?'':v).replace(/[^0-9.\-]/g,''));return Number.isFinite(n)?n:(def||0);}
+
+/* ========================= STORAGE ========================= */
+/* Uses claude.ai artifact window.storage when present; falls back to
+   localStorage so the same downloaded file works when self-hosted. */
+const STORE_KEY='ledgerline_db_v1';
+const Storage = {
+  async load(){
+    try{
+      if(window.storage && window.storage.get){
+        const r=await window.storage.get(STORE_KEY);
+        return r&&r.value?JSON.parse(r.value):null;
+      }
+    }catch(e){/* fall through */}
+    try{const raw=localStorage.getItem(STORE_KEY);return raw?JSON.parse(raw):null;}catch(e){return null;}
+  },
+  async save(db){
+    const json=JSON.stringify(db);
+    try{
+      if(window.storage && window.storage.set){await window.storage.set(STORE_KEY,json);return;}
+    }catch(e){/* fall through */}
+    try{localStorage.setItem(STORE_KEY,json);}catch(e){toast('Storage full — export a backup','err');}
+  }
+};
+
+/* ========================= STATE ========================= */
+let DB=null;          // full database
+let UI={ route:'home', profileId:null, search:'', railOpen:false, salesTab:'invoices',
+        payTab:'incoming', repTab:'aging', setTab:'profiles' };
+
+const saveDB = debounce(()=>Storage.save(DB), 250);
+function commit(){ DB.updatedAt=nowISO(); saveDB(); }
+
+function audit(action,detail,ref){
+  DB.audit.unshift({id:uid('aud'),at:nowISO(),actor:DB.settings.ownerName||'Owner',
+    profileId:UI.profileId,action,detail:detail||'',ref:ref||null});
+  if(DB.audit.length>4000)DB.audit.length=4000;
+}
+
+/* profile-scoped selectors — enforce isolation everywhere */
+const P = ()=> DB.profiles.find(p=>p.id===UI.profileId) || DB.profiles[0];
+const scoped = (arr)=> arr.filter(x=>x.profileId===UI.profileId);
+function byId(arr,id){return arr.find(x=>x.id===id);}
+function customer(id){return byId(DB.customers,id);}
+function profileById(id){return byId(DB.profiles,id);}
+
+/* ========================= SEED DATA ========================= */
+function seedProfiles(){
+  return [
+    { id:'prof_consulting', active:true, status:'active',
+      brandName:'Grocloud', legalName:'Oluwole (Wole) Ogunwale',
+      operatingAs:'Grocloud', tagline:'Personal Consulting', template:'consulting',
+      accent:'#3b5bdb', logoText:'GC', logoImage:null,
+      address:'Toronto, ON, Canada', regNo:'', taxLabel:'HST', taxNo:'', taxRate:13,
+      phone:'', email:'wole@example.com', website:'',
+      currency:'CAD', timezone:'America/Toronto',
+      paymentInstructions:'Interac e-Transfer to wole@example.com · Bank transfer on request',
+      terms:'Net 15. Please include the invoice number with payment.',
+      signature:'Wole Ogunwale', authorizedSender:'Wole Ogunwale',
+      seq:{invoice:{prefix:'WO-INV-',next:1001},receipt:{prefix:'WO-RCT-',next:5001},
+           estimate:{prefix:'WO-EST-',next:2001},credit:{prefix:'WO-CN-',next:9001},statement:{prefix:'WO-ST-',next:1}},
+      reminderSchedule:[-3,0,3,7,14] },
+    { id:'prof_cargo', active:true, status:'active',
+      brandName:'ShippedByWole / CargoPadi', legalName:'Olusadewale Trading Inc.',
+      operatingAs:'ShippedByWole / CargoPadi', tagline:'Nigeria–Canada Logistics', template:'logistics',
+      accent:'#0d9488', logoText:'SW',
+      address:'Vaughan, ON, Canada', regNo:'', taxLabel:'HST', taxNo:'', taxRate:13,
+      phone:'', email:'ship@example.com', website:'',
+      currency:'CAD', timezone:'America/Toronto',
+      paymentInstructions:'Interac e-Transfer · Bank transfer · Payment on pickup accepted',
+      terms:'Payment due on delivery unless a credit account is agreed.',
+      signature:'Olusadewale Trading Inc.', authorizedSender:'ShippedByWole',
+      seq:{invoice:{prefix:'SW-INV-',next:1001},receipt:{prefix:'SW-RCT-',next:5001},
+           estimate:{prefix:'SW-QT-',next:2001},credit:{prefix:'SW-CN-',next:9001},statement:{prefix:'SW-ST-',next:1}},
+      reminderSchedule:[-3,0,3,7,14] },
+    { id:'prof_baker', active:true, status:'active',
+      brandName:'Baker Premium Grocers', legalName:'Olusadewale Trading Inc.',
+      operatingAs:'Baker Premium Grocers', tagline:'Food Products & Ingredients', template:'grocers',
+      accent:'#2f9e44', logoText:'BP',
+      address:'950 Portage Parkway, Vaughan, ON', regNo:'', taxLabel:'HST', taxNo:'', taxRate:13,
+      phone:'', email:'orders@example.com', website:'',
+      currency:'CAD', timezone:'America/Toronto',
+      paymentInstructions:'Bank transfer · Interac e-Transfer · Cheque payable to Olusadewale Trading Inc.',
+      terms:'Wholesale Net 30; retail due on receipt.',
+      signature:'Baker Premium Grocers', authorizedSender:'Baker Premium Grocers',
+      seq:{invoice:{prefix:'BP-INV-',next:1001},receipt:{prefix:'BP-RCT-',next:5001},
+           estimate:{prefix:'BP-QT-',next:2001},credit:{prefix:'BP-CN-',next:9001},statement:{prefix:'BP-ST-',next:1}},
+      reminderSchedule:[-3,0,3,7,14,30] },
+    { id:'prof_trading', active:true, status:'active',
+      brandName:'Woleodofin Trading Company Ltd', legalName:'Woleodofin Trading Company Ltd',
+      operatingAs:'', tagline:'Commodity Trading & Brokerage', template:'commodity',
+      accent:'#b8860b', logoText:'WT',
+      address:'', regNo:'', taxLabel:'VAT', taxNo:'', taxRate:0,
+      phone:'', email:'trade@example.com', website:'',
+      currency:'USD', timezone:'Africa/Lagos',
+      paymentInstructions:'Bank transfer to the account on this invoice. Reference the PO/LPO number.',
+      terms:'Per contract. Balance due against shipping documents unless otherwise agreed.',
+      signature:'Woleodofin Trading Company Ltd', authorizedSender:'Woleodofin Trading',
+      seq:{invoice:{prefix:'WTC-INV-',next:1001},receipt:{prefix:'WTC-RCT-',next:5001},
+           estimate:{prefix:'WTC-PF-',next:2001},credit:{prefix:'WTC-CN-',next:9001},statement:{prefix:'WTC-ST-',next:1}},
+      reminderSchedule:[-3,0,3,7,14] },
+    { id:'prof_garments', active:true, status:'active',
+      brandName:'Woleodofin Custom MTM Garments', legalName:'Woleodofin Custom MTM Garments',
+      operatingAs:'', tagline:'Bespoke & Made-to-Measure', template:'garments',
+      accent:'#9c2c5b', logoText:'WG',
+      address:'Vaughan, Ontario, Canada', regNo:'', taxLabel:'HST', taxNo:'', taxRate:13,
+      phone:'', email:'atelier@example.com', website:'',
+      currency:'CAD', timezone:'America/Toronto',
+      paymentInstructions:'50% deposit to confirm · Balance due before delivery · Interac e-Transfer accepted',
+      terms:'Deposit is non-refundable once cutting begins. Balance due before delivery/collection.',
+      signature:'Woleodofin Custom MTM Garments', authorizedSender:'Woleodofin Atelier',
+      seq:{invoice:{prefix:'WG-INV-',next:1001},receipt:{prefix:'WG-RCT-',next:5001},
+           estimate:{prefix:'WG-QT-',next:2001},credit:{prefix:'WG-CN-',next:9001},statement:{prefix:'WG-ST-',next:1}},
+      reminderSchedule:[-3,0,3,7,14] },
+  ];
+}
+function seedCatalog(){
+  return [
+    {id:uid('cat'),profileId:'prof_consulting',type:'service',code:'CONSULT',name:'Consulting — hourly',unit:'hour',priceMinor:15000,currency:'CAD',taxable:true,active:true},
+    {id:uid('cat'),profileId:'prof_consulting',type:'service',code:'ADVISORY',name:'Advisory retainer (monthly)',unit:'flat fee',priceMinor:200000,currency:'CAD',taxable:true,active:true},
+    {id:uid('cat'),profileId:'prof_consulting',type:'expense',code:'EXP',name:'Reimbursable expense',unit:'flat fee',priceMinor:0,currency:'CAD',taxable:false,active:true},
+    {id:uid('cat'),profileId:'prof_cargo',type:'shipping',code:'AIR-KG',name:'Air freight — per kg',unit:'kilogram',priceMinor:1800,currency:'CAD',taxable:true,active:true},
+    {id:uid('cat'),profileId:'prof_cargo',type:'shipping',code:'SEA-CBM',name:'Sea freight — per CBM',unit:'package',priceMinor:35000,currency:'CAD',taxable:true,active:true},
+    {id:uid('cat'),profileId:'prof_cargo',type:'fee',code:'PICKUP',name:'Pickup / drop-off',unit:'trip',priceMinor:2500,currency:'CAD',taxable:true,active:true},
+    {id:uid('cat'),profileId:'prof_cargo',type:'passthrough',code:'CUSTOMS',name:'Customs / duties (pass-through)',unit:'flat fee',priceMinor:0,currency:'CAD',taxable:false,active:true},
+    {id:uid('cat'),profileId:'prof_baker',type:'product',code:'RICE-25',name:'Premium rice — 25kg bag',unit:'item',priceMinor:6500,currency:'CAD',taxable:false,active:true},
+    {id:uid('cat'),profileId:'prof_baker',type:'product',code:'OIL-5L',name:'Vegetable oil — 5L',unit:'item',priceMinor:2200,currency:'CAD',taxable:false,active:true},
+    {id:uid('cat'),profileId:'prof_baker',type:'shipping',code:'DELIV',name:'Delivery',unit:'trip',priceMinor:3000,currency:'CAD',taxable:true,active:true},
+    {id:uid('cat'),profileId:'prof_trading',type:'product',code:'CPO',name:'Crude palm oil',unit:'metric tonne',priceMinor:90000,currency:'USD',taxable:false,active:true},
+    {id:uid('cat'),profileId:'prof_trading',type:'commission',code:'BRK',name:'Brokerage commission',unit:'percentage',priceMinor:0,currency:'USD',taxable:false,active:true},
+    {id:uid('cat'),profileId:'prof_garments',type:'product',code:'SUIT-2PC',name:'Bespoke 2-piece suit',unit:'garment',priceMinor:95000,currency:'CAD',taxable:true,active:true},
+    {id:uid('cat'),profileId:'prof_garments',type:'product',code:'SHIRT',name:'Made-to-measure shirt',unit:'garment',priceMinor:18000,currency:'CAD',taxable:true,active:true},
+    {id:uid('cat'),profileId:'prof_garments',type:'service',code:'ALTER',name:'Alteration',unit:'item',priceMinor:5000,currency:'CAD',taxable:true,active:true},
+  ];
+}
+function seedCustomers(){
+  return [
+    {id:uid('cus'),kind:'company',name:'Meridian Advisory Group',contactName:'Sandra Okafor',email:'sandra@meridianadv.example',phone:'+1 416 555 0142',address:'Toronto, ON',currency:'CAD',terms:15,notes:'',consentEmail:true,consentSms:true,createdAt:nowISO()},
+    {id:uid('cus'),kind:'individual',name:'David Chen',email:'david.chen@example.com',phone:'+1 647 555 0199',address:'Markham, ON',currency:'CAD',terms:0,notes:'',consentEmail:true,consentSms:true,createdAt:nowISO()},
+    {id:uid('cus'),kind:'company',name:'Lagos AgriExport Ltd',contactName:'Musa Bello',email:'musa@lagosagri.example',phone:'+234 802 555 0123',address:'Apapa, Lagos',currency:'USD',terms:30,notes:'',consentEmail:true,consentSms:false,createdAt:nowISO()},
+  ];
+}
+function freshDB(withDemo){
+  const db={
+    version:1, createdAt:nowISO(), updatedAt:nowISO(),
+    settings:{ownerName:'Wole Ogunwale',roundingToleranceMinor:2,quietStart:21,quietEnd:8},
+    profiles:seedProfiles(),
+    customers:withDemo?seedCustomers():[],
+    catalog:withDemo?seedCatalog():seedCatalog(),
+    estimates:[], invoices:[], payments:[], receipts:[], credits:[], refunds:[], writeoffs:[],
+    messages:[], audit:[], attachments:[],
+  };
+  return db;
+}
+
+/* ========================= FINANCE ENGINE =========================
+   All amounts are integer minor units. Balances are ALWAYS computed
+   from append-only events, never stored as an editable number. */
+
+// Compute a single line's amount (integer minor units)
+function lineAmount(li){
+  // percentage-type lines compute against a provided base
+  if(li.kind==='percent'){ return pctMinor(li.baseMinor||0, num(li.qty,0)); }
+  return mulMinor(li.priceMinor||0, num(li.qty,0));
+}
+
+// Reproducible invoice/estimate totals from its own snapshot of lines & settings
+function computeTotals(doc){
+  const cur=doc.currency;
+  let subtotal=0, taxable=0, nonTaxable=0;
+  const lines=(doc.lines||[]).map(li=>{
+    const amt=lineAmount(li);
+    return {...li, amountMinor:amt};
+  });
+  lines.forEach(li=>{
+    subtotal+=li.amountMinor;
+    if(li.taxable) taxable+=li.amountMinor; else nonTaxable+=li.amountMinor;
+  });
+  // document-level discount (percent or fixed)
+  let discountMinor=0;
+  if(doc.discountType==='percent') discountMinor=pctMinor(subtotal, num(doc.discountValue,0));
+  else if(doc.discountType==='fixed') discountMinor=toMinor(doc.discountValue||0,cur);
+  discountMinor=Math.min(discountMinor, subtotal);
+  // apportion discount across taxable base proportionally
+  const taxableAfterDisc = subtotal>0 ? taxable - Math.round(discountMinor*(taxable/subtotal)) : 0;
+  const taxRate=num(doc.taxRate,0);
+  const taxMinor = doc.taxInclusive ? 0 : pctMinor(Math.max(0,taxableAfterDisc), taxRate);
+  const shippingMinor = toMinor(doc.shippingValue||0,cur);
+  const withholdingMinor = doc.withholdingPct ? pctMinor(subtotal-discountMinor, num(doc.withholdingPct,0)) : 0;
+  const total = subtotal - discountMinor + taxMinor + shippingMinor - withholdingMinor;
+  return {lines,subtotalMinor:subtotal,discountMinor,taxableAfterDisc,taxMinor,shippingMinor,
+          withholdingMinor,totalMinor:Math.max(0,total),taxRate};
+}
+
+// Credits applied to an invoice (from credit notes)
+function invoiceCreditsApplied(invId){
+  return DB.credits.filter(c=>c.invoiceId===invId && c.status!=='void')
+    .reduce((s,c)=>s+(c.amountMinor||0),0);
+}
+function invoiceWriteoffs(invId){
+  return DB.writeoffs.filter(w=>w.invoiceId===invId).reduce((s,w)=>s+(w.amountMinor||0),0);
+}
+
+// Net paid = confirmed allocations − confirmed refunds/reversals
+function invoiceNetPaid(invId){
+  let paid=0;
+  DB.payments.forEach(p=>{
+    if(p.status!=='confirmed'&&p.status!=='cleared')return;
+    (p.allocations||[]).forEach(a=>{ if(a.invoiceId===invId) paid+=a.amountMinor; });
+  });
+  DB.refunds.forEach(r=>{ if(r.invoiceId===invId && r.status!=='void') paid-=r.amountMinor; });
+  return paid;
+}
+
+// The full computed financial position of an invoice
+function invoicePosition(inv){
+  const t=inv.totals || computeTotals(inv);
+  const total=t.totalMinor;
+  const credits=invoiceCreditsApplied(inv.id);
+  const writeoff=invoiceWriteoffs(inv.id);
+  const netPaid=invoiceNetPaid(inv.id);
+  const balance = total - credits - netPaid - writeoff;
+  const tol=DB.settings.roundingToleranceMinor||0;
+  let payStatus;
+  if(inv.lifecycle==='void') payStatus='void';
+  else if(balance<=tol && total>0) payStatus = (netPaid>total-credits+tol)?'overpaid':'paid';
+  else if(netPaid>0 || credits>0 || writeoff>0) payStatus='partial';
+  else payStatus='unpaid';
+  return {totalMinor:total,creditsMinor:credits,writeoffMinor:writeoff,netPaidMinor:netPaid,
+          balanceMinor:Math.max(0,balance),rawBalance:balance,payStatus};
+}
+
+// Due state computed independently of payment
+function dueState(inv,today){
+  today=today||todayStr();
+  if(!inv.dueDate) return {state:'none',days:0};
+  const d=daysBetween(today,inv.dueDate);
+  if(d>0) return {state:'notdue',days:d};
+  if(d===0) return {state:'due',days:0};
+  return {state:'overdue',days:-d};
+}
+
+// AR aging bucket for an outstanding invoice
+function agingBucket(inv,today){
+  const ds=dueState(inv,today);
+  if(ds.state!=='overdue') return 'current';
+  const d=ds.days;
+  if(d<=30)return '1-30'; if(d<=60)return '31-60'; if(d<=90)return '61-90'; return '90+';
+}
+
+/* ---------- Numbering (per profile + doc type) ---------- */
+function nextNumber(profile,type){
+  const seq=profile.seq[type];
+  const n=seq.next;
+  const yr=new Date().getFullYear();
+  const full=(seq.prefix||'').replace('{YYYY}',yr).replace('{YY}',String(yr).slice(2))+n;
+  return {full,n};
+}
+function reserveNumber(profile,type){
+  const {full,n}=nextNumber(profile,type);
+  profile.seq[type].next=n+1;
+  return full;
+}
+
+/* ---------- Immutable issued snapshot ---------- */
+function snapshotSeller(profile){
+  return {profileId:profile.id,brandName:profile.brandName,legalName:profile.legalName,
+    operatingAs:profile.operatingAs,tagline:profile.tagline,accent:profile.accent,logoText:profile.logoText,logoImage:profile.logoImage||null,
+    address:profile.address,regNo:profile.regNo,taxLabel:profile.taxLabel,taxNo:profile.taxNo,
+    phone:profile.phone,email:profile.email,website:profile.website,currency:profile.currency,
+    paymentInstructions:profile.paymentInstructions,terms:profile.terms,signature:profile.signature,
+    authorizedSender:profile.authorizedSender,template:profile.template};
+}
+function snapshotCustomer(cus){
+  if(!cus)return null;
+  return {id:cus.id,kind:cus.kind,name:cus.name,contactName:cus.contactName||'',email:cus.email||'',
+    phone:cus.phone||'',address:cus.address||'',taxNo:cus.taxNo||''};
+}
+
+/* ========================= DOCUMENT TEMPLATES ========================= */
+function sellerBlock(s){
+  const op = s.operatingAs ? `<div class="op">${esc(s.legalName)}, operating as ${esc(s.operatingAs)}</div>`
+                           : (s.legalName!==s.brandName?`<div class="op">${esc(s.legalName)}</div>`:'');
+  return `<div class="d-seller">
+    <h2>${esc(s.brandName)}</h2>${op}
+    ${s.address?`<p>${esc(s.address)}</p>`:''}
+    ${s.phone?`<p>${esc(s.phone)}</p>`:''}${s.email?`<p>${esc(s.email)}</p>`:''}
+    ${s.website?`<p>${esc(s.website)}</p>`:''}
+    ${s.taxNo?`<p>${esc(s.taxLabel||'Tax')} #: ${esc(s.taxNo)}</p>`:''}
+    ${s.regNo?`<p>Reg #: ${esc(s.regNo)}</p>`:''}
+  </div>`;
+}
+function customerBlock(c){
+  if(!c)return '<div><div class="lbl">Bill to</div><b>—</b></div>';
+  return `<div><div class="lbl">Bill to</div>
+    <b>${esc(c.name)}</b>
+    ${c.contactName?`<div>${esc(c.contactName)}</div>`:''}
+    ${c.address?`<div>${esc(c.address)}</div>`:''}
+    ${c.email?`<div>${esc(c.email)}</div>`:''}${c.phone?`<div>${esc(c.phone)}</div>`:''}
+    ${c.taxNo?`<div>Tax #: ${esc(c.taxNo)}</div>`:''}</div>`;
+}
+function bizFieldsBlock(doc){
+  const f=doc.bizFields||{}; const rows=[];
+  const add=(k,v)=>{if(v)rows.push(`<div><span style="color:#888">${esc(k)}: </span><b>${esc(v)}</b></div>`);};
+  add('PO / LPO',doc.poNumber); add('Reference',doc.reference);
+  if(doc.template==='logistics'){add('Origin',f.origin);add('Destination',f.destination);add('Shipment ID',f.shipmentId);add('Tracking',f.tracking);add('Mode',f.mode);add('Weight',f.weight);add('Packages',f.packages);add('Delivery status',f.deliveryStatus);}
+  if(doc.template==='grocers'){add('Lot / Batch',f.lot);add('Delivery location',f.deliveryLocation);add('Delivery date',f.deliveryDate);add('Terms',f.wholesaleRetail);}
+  if(doc.template==='commodity'){add('Commodity',f.commodity);add('Grade / Spec',f.grade);add('Incoterm',f.incoterm);add('Source',f.source);add('Destination',f.destination);add('Contract',f.contract);}
+  if(doc.template==='garments'){add('Order #',f.orderNo);add('Category',f.category);add('Fitting date',f.fittingDate);add('Promised delivery',f.promisedDelivery);}
+  if(doc.template==='consulting'){add('Project',f.project);add('Service period',f.servicePeriod);}
+  if(doc.serviceStart||doc.serviceEnd)add('Service period',[doc.serviceStart,doc.serviceEnd].filter(Boolean).map(fmtDate).join(' – '));
+  if(!rows.length)return '';
+  return `<div class="d-pay" style="background:#fbfbfd">${rows.join('')}</div>`;
+}
+function linesTable(t,cur){
+  return `<table class="lines"><thead><tr>
+    <th style="width:48%">Description</th><th class="r">Qty</th><th class="r">Unit price</th><th class="r">Amount</th>
+  </tr></thead><tbody>
+  ${t.lines.map(li=>`<tr>
+    <td class="desc"><b>${esc(li.name||'Item')}</b>${li.note?`<small>${esc(li.note)}</small>`:''}${li.taxable?'':'<small>Tax exempt</small>'}</td>
+    <td class="r">${li.kind==='percent'?num(li.qty)+'%':num(li.qty)}${li.unit&&li.kind!=='percent'?' '+esc(li.unit):''}</td>
+    <td class="r">${li.kind==='percent'?money(li.baseMinor||0,cur):money(li.priceMinor||0,cur)}</td>
+    <td class="r">${money(li.amountMinor,cur)}</td></tr>`).join('')}
+  </tbody></table>`;
+}
+function totalsBlock(t,cur,pos){
+  let h=`<div class="d-tot">
+    <div class="tr"><span>Subtotal</span><span>${money(t.subtotalMinor,cur)}</span></div>`;
+  if(t.discountMinor>0)h+=`<div class="tr"><span>Discount</span><span>−${money(t.discountMinor,cur)}</span></div>`;
+  if(t.taxMinor>0)h+=`<div class="tr"><span>Tax (${t.taxRate}%)</span><span>${money(t.taxMinor,cur)}</span></div>`;
+  if(t.shippingMinor>0)h+=`<div class="tr"><span>Shipping / handling</span><span>${money(t.shippingMinor,cur)}</span></div>`;
+  if(t.withholdingMinor>0)h+=`<div class="tr"><span>Withholding</span><span>−${money(t.withholdingMinor,cur)}</span></div>`;
+  h+=`<div class="tr grand"><span>Total</span><span>${money(t.totalMinor,cur)}</span></div>`;
+  if(pos){
+    if(pos.creditsMinor>0)h+=`<div class="tr paidln"><span>Credits applied</span><span>−${money(pos.creditsMinor,cur)}</span></div>`;
+    if(pos.netPaidMinor>0)h+=`<div class="tr paidln"><span>Paid to date</span><span>−${money(pos.netPaidMinor,cur)}</span></div>`;
+    if(pos.writeoffMinor>0)h+=`<div class="tr paidln"><span>Written off</span><span>−${money(pos.writeoffMinor,cur)}</span></div>`;
+    if(pos.payStatus!=='paid'||pos.netPaidMinor>0||pos.creditsMinor>0)
+      h+=`<div class="tr balln"><span>Balance due</span><span>${money(pos.balanceMinor,cur)}</span></div>`;
+  }
+  h+=`</div>`;return h;
+}
+/* Renders an uploaded logo image if present, otherwise a colored initials badge. Used on documents, settings cards, and the profile switcher. */
+function logoMarkup(obj,opt){
+  opt=opt||{};const size=opt.size||56,r=opt.radius||11,fs=opt.fontSize||Math.round(size*0.4);
+  if(obj&&obj.logoImage){
+    return `<div class="d-logo" style="width:${size}px;height:${size}px;border-radius:${r}px;background:#fff;overflow:hidden;padding:0;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)"><img src="${obj.logoImage}" alt="" style="width:100%;height:100%;object-fit:contain"></div>`;
+  }
+  const label=esc((obj&&(obj.logoText||(obj.brandName||'?')[0]))||'?');
+  return `<div class="d-logo" style="width:${size}px;height:${size}px;border-radius:${r}px;font-size:${fs}px;background:${obj?obj.accent:'#3b5bdb'}">${label}</div>`;
+}
+function docLogo(s){return logoMarkup(s,{size:56,radius:11,fontSize:22});}
+function pswThumb(pr){
+  if(pr&&pr.logoImage)return `<span style="width:22px;height:22px;flex:0 0 22px;border-radius:6px;overflow:hidden;background:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.06)"><img src="${pr.logoImage}" alt="" style="width:100%;height:100%;object-fit:contain"></span>`;
+  return `<span class="psw-dot" style="background:${pr?pr.accent:'var(--accent)'}"></span>`;
+}
+/* Read an image file, downscale to <=512px, return a compact PNG data URL. */
+function fileToLogo(file,cb){
+  if(!file){cb(null);return;}
+  if(file.size>6*1024*1024){toast('Image is too large (max 6 MB)','err');cb(null);return;}
+  const rd=new FileReader();
+  rd.onload=()=>{const img=new Image();
+    img.onload=()=>{const max=512;let w=img.width,h=img.height;const sc=Math.min(1,max/Math.max(w,h));
+      const cw=Math.max(1,Math.round(w*sc)),ch=Math.max(1,Math.round(h*sc));
+      const cv=document.createElement('canvas');cv.width=cw;cv.height=ch;
+      const cx=cv.getContext('2d');cx.clearRect(0,0,cw,ch);cx.drawImage(img,0,0,cw,ch);
+      try{cb(cv.toDataURL('image/png'));}catch(e){cb(null);}};
+    img.onerror=()=>{toast('Could not read that image','err');cb(null);};
+    img.src=rd.result;};
+  rd.onerror=()=>{toast('Could not read that file','err');cb(null);};
+  rd.readAsDataURL(file);
+}
+
+function renderInvoiceDoc(inv){
+  const s=inv.seller; const c=inv.customerSnap; const cur=inv.currency;
+  const t=inv.totals||computeTotals(inv); const pos=invoicePosition(inv);
+  const ds=dueState(inv);
+  let stamp='';
+  if(pos.payStatus==='paid')stamp='<span class="d-paidstamp">Paid</span>';
+  else if(inv.lifecycle==='void')stamp='<span class="d-paidstamp d-overstamp">Void</span>';
+  else if(ds.state==='overdue')stamp=`<span class="d-paidstamp d-overstamp">${ds.days}d Overdue</span>`;
+  else if(pos.payStatus==='partial')stamp='<span class="d-paidstamp" style="border-color:#b26a00;color:#b26a00">Part-paid</span>';
+  const wm=inv.lifecycle==='draft'?'DRAFT':(inv.lifecycle==='void'?'VOID':'');
+  const pays=DB.payments.filter(p=>(p.allocations||[]).some(a=>a.invoiceId===inv.id));
+  return `<div class="paper ${wm?'watermark':''}" ${wm?`data-wm="${wm}"`:''}>
+    <div class="d-top">${docLogo(s)}${sellerBlock(s)}
+      <div class="d-meta"><div class="d-type">Invoice</div>
+        <table><tr><td class="k">Number</td><td>${esc(inv.number||'(draft)')}</td></tr>
+        <tr><td class="k">Issue date</td><td>${fmtDate(inv.issueDate)}</td></tr>
+        <tr><td class="k">Due date</td><td>${fmtDate(inv.dueDate)}</td></tr>
+        ${inv.poNumber?`<tr><td class="k">PO / LPO</td><td>${esc(inv.poNumber)}</td></tr>`:''}
+        <tr><td class="k">Currency</td><td>${cur}</td></tr></table>
+        <div style="margin-top:10px">${stamp}</div>
+      </div></div>
+    <div class="bill-to">${customerBlock(c)}
+      <div style="text-align:right"><div class="lbl">Amount due</div>
+        <b style="font-size:22px">${money(pos.balanceMinor,cur)}</b></div></div>
+    ${bizFieldsBlock(inv)}
+    ${linesTable(t,cur)}
+    ${totalsBlock(t,cur,pos)}
+    ${pays.length?`<table class="d-hist"><thead><tr><th>Payment history</th><th class="r">Date</th><th>Method</th><th class="r">Amount</th></tr></thead><tbody>${pays.map(p=>{const a=(p.allocations||[]).filter(x=>x.invoiceId===inv.id).reduce((s,x)=>s+x.amountMinor,0);return `<tr><td>${esc(p.number||p.reference||'Payment')}</td><td class="r">${fmtDate(p.date)}</td><td>${esc(methodLabel(p.method))}</td><td class="r">${money(a,cur)}</td></tr>`;}).join('')}</tbody></table>`:''}
+    ${inv.memo?`<div class="d-note"><h4>Notes</h4>${esc(inv.memo)}</div>`:''}
+    ${pos.balanceMinor>0?`<div class="d-pay"><b>Payment instructions</b><br>${esc(s.paymentInstructions||'')}</div>`:''}
+    ${s.terms?`<div class="d-note"><h4>Terms</h4>${esc(s.terms)}</div>`:''}
+    <div class="d-foot">${esc(s.legalName)} · Thank you for your business</div>
+  </div>`;
+}
+
+function renderReceiptDoc(rct){
+  const inv=byId(DB.invoices,rct.invoiceId); const s=rct.seller; const c=rct.customerSnap; const cur=rct.currency;
+  const pos=inv?invoicePosition(inv):{balanceMinor:rct.balanceAfterMinor||0,totalMinor:rct.invoiceTotalMinor};
+  const full=(rct.balanceAfterMinor||0)<=0;
+  return `<div class="paper">
+    <div class="d-top">${docLogo(s)}${sellerBlock(s)}
+      <div class="d-meta"><div class="d-type">Receipt</div>
+        <table><tr><td class="k">Receipt #</td><td>${esc(rct.number)}</td></tr>
+        <tr><td class="k">Date</td><td>${fmtDate(rct.date)}</td></tr>
+        <tr><td class="k">For invoice</td><td>${esc(rct.invoiceNumber||'—')}</td></tr>
+        <tr><td class="k">Method</td><td>${esc(methodLabel(rct.method))}</td></tr>
+        ${rct.reference?`<tr><td class="k">Reference</td><td>${esc(rct.reference)}</td></tr>`:''}</table>
+        <div style="margin-top:10px"><span class="d-paidstamp" style="${full?'':'border-color:#b26a00;color:#b26a00'}">${full?'Paid in full':'Payment received'}</span></div>
+      </div></div>
+    <div class="bill-to">${customerBlock(c)}
+      <div style="text-align:right"><div class="lbl">Amount received</div>
+        <b style="font-size:24px;color:var(--ok)">${money(rct.amountMinor,cur)}</b></div></div>
+    <div class="d-tot">
+      <div class="tr"><span>Invoice total</span><span>${money(rct.invoiceTotalMinor,cur)}</span></div>
+      <div class="tr paidln"><span>This payment</span><span>${money(rct.amountMinor,cur)}</span></div>
+      <div class="tr"><span>Cumulative paid</span><span>${money(rct.cumulativePaidMinor,cur)}</span></div>
+      <div class="tr balln"><span>Remaining balance</span><span>${money(rct.balanceAfterMinor,cur)}</span></div>
+    </div>
+    ${rct.balanceAfterMinor>0&&inv?`<div class="d-pay"><b>Remaining balance ${money(rct.balanceAfterMinor,cur)}</b> due ${fmtDate(inv.dueDate)}.<br>${esc(s.paymentInstructions||'')}</div>`:''}
+    <div class="d-note">This receipt confirms a payment received against invoice ${esc(rct.invoiceNumber||'')}. ${full?'The invoice is now paid in full.':'A further receipt will be issued when the balance is paid.'}</div>
+    <div class="d-foot">${esc(s.legalName)} · Issued ${fmtDate(rct.date)}</div>
+  </div>`;
+}
+
+function renderEstimateDoc(est){
+  const s=est.seller||snapshotSeller(P()); const c=est.customerSnap||snapshotCustomer(customer(est.customerId)); const cur=est.currency;
+  const t=est.totals||computeTotals(est);
+  return `<div class="paper ${est.status==='draft'?'watermark':''}" ${est.status==='draft'?'data-wm="DRAFT"':''}>
+    <div class="d-top">${docLogo(s)}${sellerBlock(s)}
+      <div class="d-meta"><div class="d-type">${est.template==='commodity'?'Pro Forma':'Estimate'}</div>
+        <table><tr><td class="k">Number</td><td>${esc(est.number||'(draft)')}</td></tr>
+        <tr><td class="k">Date</td><td>${fmtDate(est.issueDate)}</td></tr>
+        ${est.expiryDate?`<tr><td class="k">Valid until</td><td>${fmtDate(est.expiryDate)}</td></tr>`:''}
+        <tr><td class="k">Currency</td><td>${cur}</td></tr></table></div></div>
+    <div class="bill-to">${customerBlock(c)}
+      <div style="text-align:right"><div class="lbl">Estimated total</div><b style="font-size:22px">${money(t.totalMinor,cur)}</b></div></div>
+    ${bizFieldsBlock(est)}
+    ${linesTable(t,cur)}
+    ${totalsBlock(t,cur,null)}
+    ${est.depositMinor?`<div class="d-pay"><b>Deposit to confirm:</b> ${money(est.depositMinor,cur)}</div>`:''}
+    ${est.scope?`<div class="d-note"><h4>Scope</h4>${esc(est.scope)}</div>`:''}
+    ${s.terms?`<div class="d-note"><h4>Terms</h4>${esc(s.terms)}</div>`:''}
+    ${est.status==='accepted'?`<div class="d-note" style="color:var(--ok)"><b>Accepted</b> ${est.acceptedBy?'by '+esc(est.acceptedBy):''} on ${fmtDate(est.acceptedAt)}</div>`:''}
+    <div class="d-foot">${esc(s.legalName)} · This is an estimate, not a tax invoice.</div>
+  </div>`;
+}
+
+function renderStatementDoc(cusId,from,to){
+  const p=P(); const s=snapshotSeller(p); const c=snapshotCustomer(customer(cusId)); const cur=p.currency;
+  const invs=scoped(DB.invoices).filter(i=>i.customerId===cusId&&i.lifecycle!=='draft');
+  const events=[];
+  invs.forEach(i=>{const pos=invoicePosition(i);events.push({date:i.issueDate,type:'Invoice '+i.number,debit:pos.totalMinor,credit:0});});
+  DB.payments.filter(pm=>pm.profileId===p.id&&pm.customerId===cusId).forEach(pm=>{
+    events.push({date:pm.date,type:'Payment '+(pm.number||''),debit:0,credit:pm.amountMinor});});
+  events.sort((a,b)=>a.date<b.date?-1:1);
+  let bal=0;
+  const rows=events.filter(e=>(!from||e.date>=from)&&(!to||e.date<=to)).map(e=>{
+    bal+=e.debit-e.credit;
+    return `<tr><td>${fmtDate(e.date)}</td><td>${esc(e.type)}</td><td class="r">${e.debit?money(e.debit,cur):''}</td><td class="r">${e.credit?money(e.credit,cur):''}</td><td class="r">${money(bal,cur)}</td></tr>`;
+  }).join('');
+  return `<div class="paper">
+    <div class="d-top">${docLogo(s)}${sellerBlock(s)}
+      <div class="d-meta"><div class="d-type">Statement</div>
+        <table><tr><td class="k">Period</td><td>${from?fmtDate(from):'Start'} – ${to?fmtDate(to):fmtDate(todayStr())}</td></tr></table></div></div>
+    <div class="bill-to">${customerBlock(c)}
+      <div style="text-align:right"><div class="lbl">Closing balance</div><b style="font-size:22px">${money(bal,cur)}</b></div></div>
+    <table class="lines"><thead><tr><th>Date</th><th>Detail</th><th class="r">Charges</th><th class="r">Payments</th><th class="r">Balance</th></tr></thead>
+      <tbody>${rows||'<tr><td colspan="5" style="text-align:center;color:#999">No activity in this period</td></tr>'}</tbody></table>
+    <div class="d-foot">${esc(s.legalName)} · Statement generated ${fmtDate(todayStr())}</div></div>`;
+}
+
+/* ========================= DELIVERY / CHANNELS ========================= */
+function methodLabel(m){return ({cash:'Cash',bank:'Bank transfer',etransfer:'Interac e-Transfer',card:'Card',
+  cheque:'Cheque',mobile:'Mobile money',credit:'Store credit',barter:'Barter / Other',other:'Other'}[m])||m||'Payment';}
+
+// Build a full standalone HTML file for a document (for download / print window)
+function standaloneDoc(title,inner){
+  const css=$('style').textContent;
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(title)}</title>
+    <style>${css}</style></head><body style="background:#eaeef7;padding:20px">
+    <div class="doc-scroll">${inner}</div>
+    <script>window.onload=function(){/* ready */}<\/script></body></html>`;
+}
+function downloadFile(name,content,mime){
+  const blob=new Blob([content],{type:mime||'text/html'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},400);
+}
+function printDoc(inner){
+  // Render into a hidden print host and invoke print (works inside sandboxed iframe)
+  let host=$('#print-host');
+  if(!host){host=document.createElement('div');host.id='print-host';document.body.appendChild(host);}
+  host.innerHTML=`<div class="doc-scroll">${inner}</div>`;
+  host.style.display='block';
+  // hide app during print via body class
+  document.body.classList.add('printing');
+  const style=document.createElement('style');style.id='print-only-css';
+  style.textContent='@media print{body.printing>#app,body.printing>#modal-root,body.printing>#toasts{display:none!important}body.printing>#print-host{display:block!important}}';
+  document.head.appendChild(style);
+  window.print();
+  setTimeout(()=>{document.body.classList.remove('printing');host.style.display='none';host.innerHTML='';style.remove();},600);
+}
+
+// Compose an email/SMS message body for a document
+function composeMessage(kind,ctx){
+  const p=ctx.seller; const cur=ctx.currency;
+  const link='[secure document link]';
+  if(kind==='invoice'){
+    return {
+      subject:`${ctx.seller.brandName}: Invoice ${ctx.number} — ${money(ctx.balanceMinor,cur)} due ${fmtDate(ctx.dueDate)}`,
+      body:`Hello ${ctx.customerName||''},\n\nPlease find invoice ${ctx.number} for ${money(ctx.totalMinor,cur)}, with ${money(ctx.balanceMinor,cur)} due by ${fmtDate(ctx.dueDate)}.\n\n${p.paymentInstructions||''}\n\nThank you,\n${p.authorizedSender||p.brandName}`,
+      sms:`${p.brandName}: Invoice ${ctx.number} for ${money(ctx.balanceMinor,cur)} is due ${fmtDate(ctx.dueDate)}. ${p.paymentInstructions?p.paymentInstructions.split('·')[0].trim():''}`
+    };
+  }
+  if(kind==='receipt'){
+    const full=ctx.balanceAfterMinor<=0;
+    return {
+      subject:`${p.brandName}: Receipt ${ctx.number} — ${money(ctx.amountMinor,cur)} received`,
+      body:`Hello ${ctx.customerName||''},\n\nThank you — we've received ${money(ctx.amountMinor,cur)} toward invoice ${ctx.invoiceNumber}.\n\nCumulative paid: ${money(ctx.cumulativePaidMinor,cur)}\nRemaining balance: ${money(ctx.balanceAfterMinor,cur)}\n${full?'This invoice is now paid in full.':''}\n\n${p.authorizedSender||p.brandName}`,
+      sms:`${p.brandName}: Received ${money(ctx.amountMinor,cur)} for invoice ${ctx.invoiceNumber}. ${full?'Paid in full. Thank you!':'Balance '+money(ctx.balanceAfterMinor,cur)+'.'} Receipt ${ctx.number}.`
+    };
+  }
+  if(kind==='reminder'){
+    const od=ctx.overdueDays>0;
+    return {
+      subject:`${p.brandName}: ${od?'Overdue — ':''}Invoice ${ctx.number}, ${money(ctx.balanceMinor,cur)} ${od?'past due':'due '+fmtDate(ctx.dueDate)}`,
+      body:`Hello ${ctx.customerName||''},\n\n${od?`Invoice ${ctx.number} is now ${ctx.overdueDays} day(s) past due.`:`This is a friendly reminder that invoice ${ctx.number} is due ${fmtDate(ctx.dueDate)}.`}\n\nOutstanding balance: ${money(ctx.balanceMinor,cur)}\n\n${p.paymentInstructions||''}\n\nIf you've already paid, thank you — please disregard this notice.\n\n${p.authorizedSender||p.brandName}`,
+      sms:`${p.brandName}: Invoice ${ctx.number} balance ${money(ctx.balanceMinor,cur)} is ${od?ctx.overdueDays+'d overdue':'due '+fmtDate(ctx.dueDate)}. ${p.paymentInstructions?p.paymentInstructions.split('·')[0].trim():''}`
+    };
+  }
+  return {subject:'',body:'',sms:''};
+}
+
+// Open the device email/SMS composer (hands off to native apps — the offline-safe model)
+function openMail(to,subject,body){
+  const url=`mailto:${encodeURIComponent(to||'')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  try{window.open(url,'_blank');}catch(e){location.href=url;}
+}
+function openSms(to,body){
+  const url=`sms:${encodeURIComponent(to||'')}?&body=${encodeURIComponent(body)}`;
+  try{window.open(url,'_blank');}catch(e){location.href=url;}
+}
+async function copyText(text){
+  try{await navigator.clipboard.writeText(text);toast('Copied to clipboard');}
+  catch(e){const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');toast('Copied');}catch(_){toast('Copy failed — select manually','err');}ta.remove();}
+}
+async function shareDoc(title,text){
+  if(navigator.share){try{await navigator.share({title,text});return;}catch(e){}}
+  copyText(text);
+}
+
+/* ========================= TOAST / MODAL ========================= */
+function toast(msg,type){
+  const el=document.createElement('div');el.className='toast'+(type?' '+type:'');
+  el.innerHTML=`<span class="tdot"></span><span>${esc(msg)}</span>`;
+  $('#toasts').appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transform='translateX(20px)';el.style.transition='.25s';
+    setTimeout(()=>el.remove(),260);},3200);
+}
+function modal(opts){
+  const root=$('#modal-root');
+  root.innerHTML=`<div class="scrim" id="scrim">
+    <div class="modal ${opts.size||''}" role="dialog" aria-modal="true">
+      <div class="mhead"><div><h2>${esc(opts.title)}</h2>${opts.sub?`<div class="mh-sub">${esc(opts.sub)}</div>`:''}</div>
+        <button class="x" id="mclose" aria-label="Close">${icon('x',18)}</button></div>
+      <div class="mbody" id="mbody">${opts.body||''}</div>
+      ${opts.foot?`<div class="mfoot">${opts.foot}</div>`:''}
+    </div></div>`;
+  const close=()=>{root.innerHTML='';if(opts.onClose)opts.onClose();};
+  $('#mclose').onclick=close;
+  $('#scrim').onclick=(e)=>{if(e.target.id==='scrim'&&!opts.sticky)close();};
+  if(opts.onMount)opts.onMount($('#mbody'),close);
+  return {close,body:$('#mbody')};
+}
+function closeModal(){$('#modal-root').innerHTML='';}
+function confirmModal(title,msg,onYes,danger){
+  modal({title,size:'narrow',body:`<p style="margin:0 0 4px">${msg}</p>`,
+    foot:`<div class="spacer"></div><button class="btn" id="cno">Cancel</button>
+      <button class="btn ${danger?'danger':'primary'}" id="cyes">${danger?'Delete':'Confirm'}</button>`,
+    onMount:(b,close)=>{$('#cno').onclick=close;$('#cyes').onclick=()=>{close();onYes();};}});
+}
+
+/* ========================= APP SHELL ========================= */
+function applyAccent(){
+  const p=P();const a=p?p.accent:'#3b5bdb';
+  document.documentElement.style.setProperty('--accent',a);
+  // derive light wash + line from accent
+  document.documentElement.style.setProperty('--accent-wash',hexA(a,0.10));
+  document.documentElement.style.setProperty('--accent-line',hexA(a,0.32));
+  document.querySelector('meta[name=theme-color]').setAttribute('content','#12161f');
+}
+function hexA(hex,a){const h=hex.replace('#','');const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);
+  return `rgba(${r},${g},${b},${a})`;}
+
+const NAV=[
+  {id:'home',label:'Home',icon:'home'},
+  {group:'Operate'},
+  {id:'sales',label:'Sales',icon:'sales'},
+  {id:'payments',label:'Payments',icon:'pay'},
+  {id:'customers',label:'Customers',icon:'cust'},
+  {id:'catalog',label:'Catalog',icon:'cat'},
+  {group:'Manage'},
+  {id:'reports',label:'Reports',icon:'rep'},
+  {id:'messages',label:'Messages',icon:'msg'},
+  {id:'settings',label:'Settings',icon:'set'},
+];
+
+function overdueCount(){return scoped(DB.invoices).filter(i=>i.lifecycle==='issued'&&invoicePosition(i).payStatus!=='paid'&&dueState(i).state==='overdue').length;}
+function pendingMessages(){return DB.messages.filter(m=>m.profileId===UI.profileId&&m.status==='pending').length;}
+
+function renderShell(){
+  const p=P();
+  const nav=NAV.map(n=>{
+    if(n.group)return `<div class="mgroup">${n.group}</div>`;
+    let cnt='';
+    if(n.id==='messages'){const c=pendingMessages();if(c)cnt=`<span class="cnt">${c}</span>`;}
+    if(n.id==='payments'){const c=overdueCount();if(c)cnt=`<span class="cnt alert">${c}</span>`;}
+    return `<div class="mitem ${UI.route===n.id?'on':''}" data-route="${n.id}">${icon(n.icon,17)}<span>${n.label}</span>${cnt}</div>`;
+  }).join('');
+  const activeProfiles=DB.profiles.filter(x=>x.status!=='archived');
+  $('#app').innerHTML=`
+    <aside class="rail ${UI.railOpen?'open':''}" id="rail">
+      <div class="rail-top">
+        <div class="brand"><span class="glyph">L</span><span>Ledgerline<small>Multi-business receivables</small></span></div>
+      </div>
+      <div class="psw">
+        <button class="psw-btn" id="pswBtn">
+          ${pswThumb(p)}
+          <span class="psw-txt"><span class="psw-name">${esc(p.brandName)}</span>
+            <span class="psw-legal">${esc(p.operatingAs?p.legalName:p.tagline)}</span></span>
+          <span class="psw-car">${icon('chev',16)}</span>
+        </button>
+        <div class="psw-menu" id="pswMenu" style="display:none">
+          ${DB.profiles.map(pr=>`<div class="psw-item ${pr.id===UI.profileId?'on':''}" data-pid="${pr.id}">
+            ${pswThumb(pr)}
+            <span class="psw-txt"><span class="psw-name">${esc(pr.brandName)}</span>
+            <span class="psw-legal">${esc(pr.legalName)}</span></span>
+            ${pr.status==='archived'?'<span class="arch">Archived</span>':''}</div>`).join('')}
+          <div class="psw-all"><div class="psw-item" data-manage="1">${icon('set',15)}<span class="psw-name">Manage profiles…</span></div></div>
+        </div>
+      </div>
+      <nav class="menu">${nav}</nav>
+      <div class="rail-foot">
+        <div class="sync-pill"><span class="sync-dot local"></span><span>Saved locally · offline-first</span></div>
+        <div>Data current as of<br><b>${fmtDateTime(DB.updatedAt)}</b></div>
+      </div>
+    </aside>
+    <main>
+      <div class="topbar">
+        <button class="btn ghost sm mobonly" id="railToggle" aria-label="Menu">${icon('menu',18)}</button>
+        <div class="crumb"><b>${NAV.find(n=>n.id===UI.route)?.label||'Home'}</b> · ${esc(p.brandName)}</div>
+        <div class="search"><input id="globalSearch" placeholder="Search…" value="${esc(UI.search)}" aria-label="Search">
+          <span>${icon('search',15)}</span></div>
+        <button class="btn primary sm" id="quickNew">${icon('plus',16)}<span>New invoice</span></button>
+      </div>
+      <div class="content" id="view"></div>
+    </main>`;
+  wireShell();
+  applyAccent();
+  renderView();
+}
+function wireShell(){
+  $$('.mitem[data-route]').forEach(el=>el.onclick=()=>{UI.route=el.dataset.route;UI.railOpen=false;renderShell();});
+  const menu=$('#pswMenu');
+  $('#pswBtn').onclick=(e)=>{e.stopPropagation();menu.style.display=menu.style.display==='none'?'block':'none';};
+  document.addEventListener('click',()=>{if(menu)menu.style.display='none';},{once:true});
+  $$('.psw-item[data-pid]').forEach(el=>el.onclick=()=>{switchProfile(el.dataset.pid);});
+  const mng=$('.psw-item[data-manage]');if(mng)mng.onclick=()=>{UI.route='settings';UI.setTab='profiles';renderShell();};
+  $('#globalSearch').oninput=debounce((e)=>{UI.search=e.target.value;if(['sales','customers','payments','catalog'].includes(UI.route))renderView();},200);
+  $('#quickNew').onclick=()=>openInvoiceEditor(null);
+  const rt=$('#railToggle');if(rt)rt.onclick=()=>{UI.railOpen=!UI.railOpen;renderShell();};
+}
+function switchProfile(pid){
+  const pr=profileById(pid);if(!pr)return;
+  UI.profileId=pid;UI.search='';
+  toast('Switched to '+pr.brandName);
+  renderShell();
+}
+
+/* ========================= VIEW ROUTER ========================= */
+function renderView(){
+  const v=$('#view');
+  switch(UI.route){
+    case 'home':return renderHome(v);
+    case 'sales':return renderSales(v);
+    case 'payments':return renderPayments(v);
+    case 'customers':return renderCustomers(v);
+    case 'catalog':return renderCatalog(v);
+    case 'reports':return renderReports(v);
+    case 'messages':return renderMessages(v);
+    case 'settings':return renderSettings(v);
+    default:return renderHome(v);
+  }
+}
+
+/* ========================= SHARED HELPERS ========================= */
+function payBadge(pos,inv){
+  if(inv&&inv.lifecycle==='draft')return '<span class="badge b-gray">Draft</span>';
+  if(inv&&inv.lifecycle==='void')return '<span class="badge b-gray">Void</span>';
+  const m={paid:['b-green','Paid'],partial:['b-amber','Part-paid'],unpaid:['b-blue','Unpaid'],overpaid:['b-amber','Overpaid'],void:['b-gray','Void']}[pos.payStatus]||['b-gray',pos.payStatus];
+  return `<span class="badge ${m[0]}">${m[1]}</span>`;
+}
+function dueBadge(inv){
+  const pos=invoicePosition(inv);
+  if(inv.lifecycle!=='issued'||pos.payStatus==='paid')return '';
+  const ds=dueState(inv);
+  if(ds.state==='overdue')return `<span class="badge b-red">${ds.days}d overdue</span>`;
+  if(ds.state==='due')return `<span class="badge b-amber">Due today</span>`;
+  if(ds.state==='notdue')return `<span class="badge b-gray">Due in ${ds.days}d</span>`;
+  return '';
+}
+function deliveryBadge(inv){
+  const d=inv.delivery||'notsent';
+  const m={notsent:['b-gray','Not sent'],queued:['b-blue','Queued'],sent:['b-blue','Sent'],delivered:['b-green','Delivered'],viewed:['b-green','Viewed'],failed:['b-red','Failed']}[d];
+  return `<span class="badge ${m[0]}">${m[1]}</span>`;
+}
+function emptyState(icn,title,msg,btn){
+  return `<div class="empty">${icon(icn,40)}<h3>${esc(title)}</h3><p>${esc(msg)}</p>${btn||''}</div>`;
+}
+
+/* ========================= HOME ========================= */
+function renderHome(v){
+  const p=P();const cur=p.currency;
+  const invs=scoped(DB.invoices).filter(i=>i.lifecycle==='issued');
+  let invoiced=0,collected=0,outstanding=0,overdue=0,draftVal=0,credits=0;
+  invs.forEach(i=>{const pos=invoicePosition(i);invoiced+=pos.totalMinor;collected+=pos.netPaidMinor;
+    outstanding+=pos.balanceMinor;if(dueState(i).state==='overdue')overdue+=pos.balanceMinor;});
+  scoped(DB.invoices).filter(i=>i.lifecycle==='draft').forEach(i=>{draftVal+=computeTotals(i).totalMinor;});
+  DB.credits.filter(c=>c.profileId===p.id).forEach(c=>credits+=c.amountMinor);
+  // aging
+  const buckets={current:0,'1-30':0,'31-60':0,'61-90':0,'90+':0};
+  invs.forEach(i=>{const pos=invoicePosition(i);if(pos.balanceMinor>0)buckets[agingBucket(i)]+=pos.balanceMinor;});
+  const maxB=Math.max(1,...Object.values(buckets));
+  // action queue
+  const overdueInvs=invs.filter(i=>invoicePosition(i).payStatus!=='paid'&&dueState(i).state==='overdue')
+    .sort((a,b)=>dueState(b).days-dueState(a).days).slice(0,6);
+  const pend=DB.messages.filter(m=>m.profileId===p.id&&m.status==='pending');
+
+  v.innerHTML=`
+    <div class="page-head">
+      <div><h1>Good day, ${esc(DB.settings.ownerName.split(' ')[0])}</h1>
+      <div class="sub">Receivables position for <b style="color:var(--accent)">${esc(p.brandName)}</b>${p.operatingAs?' — '+esc(p.legalName):''}</div></div>
+      <div class="spacer"></div>
+      <div class="btn-row">
+        <button class="btn" id="hNewCust">${icon('cust',16)}Customer</button>
+        <button class="btn" id="hNewEst">${icon('doc',16)}Estimate</button>
+        <button class="btn" id="hPay">${icon('pay',16)}Record payment</button>
+        <button class="btn primary" id="hNewInv">${icon('plus',16)}New invoice</button>
+      </div>
+    </div>
+    <div class="grid g4" style="margin-bottom:14px">
+      <div class="stat accent"><div class="lbl">Outstanding</div><div class="val money">${money(outstanding,cur)}</div>
+        <div class="foot">${invs.filter(i=>invoicePosition(i).balanceMinor>0).length} open invoices</div></div>
+      <div class="stat"><div class="lbl">${icon('alert',13)} Overdue</div><div class="val money" style="color:${overdue>0?'var(--bad)':'inherit'}">${money(overdue,cur)}</div>
+        <div class="foot">${overdueInvs.length} past due</div></div>
+      <div class="stat"><div class="lbl">Collected</div><div class="val money">${money(collected,cur)}</div>
+        <div class="foot">of ${money(invoiced,cur)} invoiced</div></div>
+      <div class="stat"><div class="lbl">Customer credits</div><div class="val money">${money(credits,cur)}</div>
+        <div class="foot">${draftVal>0?money(draftVal,cur)+' in drafts':'available to apply'}</div></div>
+    </div>
+    <div class="grid" style="grid-template-columns:1.4fr 1fr;gap:14px;align-items:start">
+      <div class="card pad">
+        <h3 style="margin-bottom:4px">Action queue</h3>
+        <div class="sub" style="color:var(--muted);font-size:12px;margin-bottom:14px">What needs attention next</div>
+        ${overdueInvs.length||pend.length?`
+        ${pend.length?`<div class="help">${icon('msg',16)}<div><b>${pend.length} message${pend.length>1?'s':''} queued</b> — receipts and reminders ready to send. <a href="#" id="goMsg">Open Messages →</a></div></div>`:''}
+        ${overdueInvs.map(i=>{const pos=invoicePosition(i);const ds=dueState(i);const c=customer(i.customerId);
+          return `<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)">
+            <div style="flex:1;min-width:0"><b>${esc(i.number)}</b> · ${esc(c?c.name:'—')}
+              <div style="font-size:12px;color:var(--muted)">${money(pos.balanceMinor,cur)} · <span style="color:var(--bad)">${ds.days}d overdue</span></div></div>
+            <button class="btn sm" data-remind="${i.id}">${icon('msg',14)}Remind</button>
+            <button class="btn sm primary" data-openinv="${i.id}">Open</button></div>`;}).join('')}
+        `:emptyState('check','All clear','No overdue invoices or pending messages for this profile.','')}
+      </div>
+      <div class="card pad">
+        <h3 style="margin-bottom:14px">Accounts receivable aging</h3>
+        ${Object.entries(buckets).map(([k,val])=>`
+          <div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px">
+              <span style="color:var(--muted);font-weight:560">${k==='current'?'Current':k+' days'}</span>
+              <b class="money">${money(val,cur)}</b></div>
+            <div class="progress"><i style="width:${Math.round(val/maxB*100)}%;background:${k==='current'?'var(--ok)':k==='90+'?'var(--bad)':'var(--warn)'}"></i></div>
+          </div>`).join('')}
+        <button class="btn sm" style="width:100%;justify-content:center;margin-top:6px" id="goRep">View full reports</button>
+      </div>
+    </div>`;
+  $('#hNewInv').onclick=()=>openInvoiceEditor(null);
+  $('#hNewCust').onclick=()=>openCustomerEditor(null);
+  $('#hNewEst').onclick=()=>openEstimateEditor(null);
+  $('#hPay').onclick=()=>openPaymentEditor(null);
+  const gm=$('#goMsg');if(gm)gm.onclick=(e)=>{e.preventDefault();UI.route='messages';renderShell();};
+  $('#goRep').onclick=()=>{UI.route='reports';renderShell();};
+  $$('[data-openinv]').forEach(b=>b.onclick=()=>openInvoiceDetail(b.dataset.openinv));
+  $$('[data-remind]').forEach(b=>b.onclick=()=>sendReminderNow(b.dataset.remind));
+}
+
+/* ========================= CUSTOMERS ========================= */
+function customerBalance(cusId){
+  const p=P();let bal=0;
+  scoped(DB.invoices).filter(i=>i.customerId===cusId&&i.lifecycle==='issued').forEach(i=>bal+=invoicePosition(i).balanceMinor);
+  return bal;
+}
+function renderCustomers(v){
+  const p=P();const q=UI.search.toLowerCase();
+  let list=DB.customers.filter(c=>!q||c.name.toLowerCase().includes(q)||(c.email||'').toLowerCase().includes(q)||(c.phone||'').includes(q));
+  list.sort((a,b)=>a.name.localeCompare(b.name));
+  v.innerHTML=`
+    <div class="page-head"><div><h1>Customers</h1><div class="sub">${DB.customers.length} shared across all profiles · balances shown for ${esc(p.brandName)}</div></div>
+      <div class="spacer"></div><button class="btn primary" id="cNew">${icon('plus',16)}New customer</button></div>
+    ${list.length?`<div class="card"><div class="tbl-wrap"><table class="data"><thead><tr>
+      <th>Name</th><th>Contact</th><th>Terms</th><th class="r">Balance (${p.currency})</th><th></th></tr></thead><tbody>
+      ${list.map(c=>{const bal=customerBalance(c.id);return `<tr data-cid="${c.id}">
+        <td><b>${esc(c.name)}</b> <span class="chip">${c.kind==='company'?'Company':'Person'}</span></td>
+        <td><div>${esc(c.email||'—')}</div><div style="color:var(--muted);font-size:12px">${esc(c.phone||'')}</div></td>
+        <td>${c.terms?'Net '+c.terms:'Due on receipt'}</td>
+        <td class="r money"><b>${money(bal,p.currency)}</b></td>
+        <td class="r"><button class="btn ghost sm" data-edit="${c.id}">${icon('edit',15)}</button></td></tr>`;}).join('')}
+      </tbody></table></div></div>`:emptyState('cust','No customers yet','Add your first customer to start invoicing.','<button class="btn primary" id="cNew2">Add customer</button>')}`;
+  $('#cNew')&&($('#cNew').onclick=()=>openCustomerEditor(null));
+  $('#cNew2')&&($('#cNew2').onclick=()=>openCustomerEditor(null));
+  $$('[data-cid]').forEach(r=>r.onclick=(e)=>{if(e.target.closest('[data-edit]'))return;openCustomerDetail(r.dataset.cid);});
+  $$('[data-edit]').forEach(b=>b.onclick=(e)=>{e.stopPropagation();openCustomerEditor(b.dataset.edit);});
+}
+function openCustomerEditor(id){
+  const c=id?customer(id):null;
+  modal({title:c?'Edit customer':'New customer',size:'',
+    body:`
+      <div class="frow c2"><div class="field"><label>Type</label>
+        <div class="seg" id="cKind"><button data-k="company" class="${!c||c.kind==='company'?'on':''}">Company</button><button data-k="individual" class="${c&&c.kind==='individual'?'on':''}">Individual</button></div></div>
+        <div class="field"><label>Default currency</label><select class="inp" id="cCur">${Object.keys(CURRENCIES).map(k=>`<option ${c&&c.currency===k?'selected':''}>${k}</option>`).join('')}</select></div></div>
+      <div class="field"><label>Name <span class="req">*</span></label><input class="inp" id="cName" value="${esc(c?c.name:'')}" placeholder="Company or person name"></div>
+      <div class="frow c2"><div class="field"><label>Contact person</label><input class="inp" id="cContact" value="${esc(c?c.contactName:'')}"></div>
+        <div class="field"><label>Payment terms (days)</label><input class="inp" id="cTerms" type="number" value="${c?c.terms:15}" placeholder="0 = due on receipt"></div></div>
+      <div class="frow c2"><div class="field"><label>Email</label><input class="inp" id="cEmail" value="${esc(c?c.email:'')}"></div>
+        <div class="field"><label>Phone</label><input class="inp" id="cPhone" value="${esc(c?c.phone:'')}"></div></div>
+      <div class="field"><label>Address</label><textarea class="inp" id="cAddr">${esc(c?c.address:'')}</textarea></div>
+      <div class="field"><label>Tax number</label><input class="inp" id="cTax" value="${esc(c?c.taxNo:'')}"></div>
+      <div class="field"><label>Internal notes</label><textarea class="inp" id="cNotes" placeholder="Not shown to the customer">${esc(c?c.notes:'')}</textarea></div>
+      <div class="frow c2"><label class="check"><input type="checkbox" id="cCE" ${!c||c.consentEmail?'checked':''}> Email delivery consent</label>
+        <label class="check"><input type="checkbox" id="cCS" ${!c||c.consentSms?'checked':''}> SMS delivery consent</label></div>`,
+    foot:`${c?'<button class="btn danger" id="cDel">Delete</button>':''}<div class="spacer"></div>
+      <button class="btn" id="cCancel">Cancel</button><button class="btn primary" id="cSave">${c?'Save changes':'Add customer'}</button>`,
+    onMount:(b,close)=>{
+      let kind=c?c.kind:'company';
+      $$('#cKind button').forEach(x=>x.onclick=()=>{kind=x.dataset.k;$$('#cKind button').forEach(y=>y.classList.remove('on'));x.classList.add('on');});
+      $('#cCancel').onclick=close;
+      const del=$('#cDel');if(del)del.onclick=()=>{confirmModal('Delete customer','This removes the customer record. Issued invoices keep their own snapshot.',()=>{DB.customers=DB.customers.filter(x=>x.id!==id);audit('customer.delete',c.name);commit();close();renderView();toast('Customer deleted');},true);};
+      $('#cSave').onclick=()=>{
+        const name=$('#cName').value.trim();if(!name){toast('Name is required','err');return;}
+        const data={kind,name,contactName:$('#cContact').value.trim(),email:$('#cEmail').value.trim(),
+          phone:$('#cPhone').value.trim(),address:$('#cAddr').value.trim(),taxNo:$('#cTax').value.trim(),
+          currency:$('#cCur').value,terms:parseInt($('#cTerms').value)||0,notes:$('#cNotes').value.trim(),
+          consentEmail:$('#cCE').checked,consentSms:$('#cCS').checked};
+        if(c){Object.assign(c,data);audit('customer.update',name);}
+        else{DB.customers.push({id:uid('cus'),...data,createdAt:nowISO()});audit('customer.create',name);}
+        commit();close();renderView();toast(c?'Customer updated':'Customer added');
+      };
+    }});
+}
+function openCustomerDetail(id){
+  const c=customer(id);const p=P();const cur=p.currency;
+  const invs=scoped(DB.invoices).filter(i=>i.customerId===id).sort((a,b)=>b.issueDate<a.issueDate?-1:1);
+  const bal=customerBalance(id);
+  modal({title:c.name,sub:(c.kind==='company'?'Company':'Individual')+(c.email?' · '+c.email:''),size:'wide',
+    body:`
+      <div class="grid g3" style="margin-bottom:16px">
+        <div class="stat"><div class="lbl">Balance owed (${cur})</div><div class="val money">${money(bal,cur)}</div></div>
+        <div class="stat"><div class="lbl">Open invoices</div><div class="val">${invs.filter(i=>i.lifecycle==='issued'&&invoicePosition(i).balanceMinor>0).length}</div></div>
+        <div class="stat"><div class="lbl">Terms</div><div class="val" style="font-size:18px">${c.terms?'Net '+c.terms:'On receipt'}</div></div>
+      </div>
+      <div class="btn-row" style="margin-bottom:16px">
+        <button class="btn primary" id="dNewInv">${icon('plus',15)}New invoice</button>
+        <button class="btn" id="dStmt">${icon('doc',15)}Statement</button>
+        <button class="btn" id="dEdit">${icon('edit',15)}Edit</button>
+      </div>
+      <h4 style="margin-bottom:10px">Activity in ${esc(p.brandName)}</h4>
+      ${invs.length?`<div class="tbl-wrap"><table class="data"><thead><tr><th>Document</th><th>Date</th><th>Status</th><th class="r">Total</th><th class="r">Balance</th></tr></thead><tbody>
+        ${invs.map(i=>{const pos=invoicePosition(i);return `<tr data-oi="${i.id}"><td><b>${esc(i.number||'Draft')}</b></td><td>${fmtDate(i.issueDate)}</td>
+          <td>${payBadge(pos,i)} ${dueBadge(i)}</td><td class="r money">${money(pos.totalMinor,cur)}</td><td class="r money"><b>${money(pos.balanceMinor,cur)}</b></td></tr>`;}).join('')}
+      </tbody></table></div>`:'<div class="empty" style="padding:24px">No documents yet for this profile.</div>'}`,
+    onMount:(b,close)=>{
+      $('#dNewInv').onclick=()=>{close();openInvoiceEditor(null,{customerId:id});};
+      $('#dEdit').onclick=()=>{close();openCustomerEditor(id);};
+      $('#dStmt').onclick=()=>{close();openStatement(id);};
+      $$('[data-oi]',b).forEach(r=>r.onclick=()=>{close();openInvoiceDetail(r.dataset.oi);});
+    }});
+}
+
+/* ========================= CATALOG ========================= */
+const UNITS=['hour','session','item','piece','garment','kilogram','metric tonne','package','pallet','shipment','trip','flat fee','percentage'];
+const ITEM_TYPES=[['product','Product'],['service','Service'],['expense','Expense'],['shipping','Shipping charge'],['discount','Discount'],['commission','Commission'],['fee','Fee'],['passthrough','Pass-through fee']];
+function renderCatalog(v){
+  const p=P();const q=UI.search.toLowerCase();
+  let list=scoped(DB.catalog).filter(i=>!q||i.name.toLowerCase().includes(q)||(i.code||'').toLowerCase().includes(q));
+  v.innerHTML=`
+    <div class="page-head"><div><h1>Catalog</h1><div class="sub">Products, services & pricing for ${esc(p.brandName)}</div></div>
+      <div class="spacer"></div><button class="btn primary" id="kNew">${icon('plus',16)}New item</button></div>
+    ${list.length?`<div class="card"><div class="tbl-wrap"><table class="data"><thead><tr>
+      <th>Item</th><th>Type</th><th>Unit</th><th class="r">Price</th><th class="c">Tax</th><th></th></tr></thead><tbody>
+      ${list.map(i=>`<tr data-edit="${i.id}"><td><b>${esc(i.name)}</b>${i.code?` <span class="chip">${esc(i.code)}</span>`:''}</td>
+        <td>${(ITEM_TYPES.find(t=>t[0]===i.type)||[])[1]||i.type}</td><td>${esc(i.unit)}</td>
+        <td class="r money">${money(i.priceMinor,i.currency)}</td>
+        <td class="c">${i.taxable?'<span class="badge b-blue">Taxable</span>':'<span class="badge b-gray">Exempt</span>'}</td>
+        <td class="r">${icon('chev',15)}</td></tr>`).join('')}
+      </tbody></table></div></div>`:emptyState('cat','No catalog items','Add reusable products and services for faster invoicing.','<button class="btn primary" id="kNew2">Add item</button>')}`;
+  $('#kNew')&&($('#kNew').onclick=()=>openCatalogEditor(null));
+  $('#kNew2')&&($('#kNew2').onclick=()=>openCatalogEditor(null));
+  $$('[data-edit]').forEach(r=>r.onclick=()=>openCatalogEditor(r.dataset.edit));
+}
+function openCatalogEditor(id){
+  const it=id?byId(DB.catalog,id):null;const p=P();
+  modal({title:it?'Edit item':'New catalog item',size:'',
+    body:`
+      <div class="field"><label>Name <span class="req">*</span></label><input class="inp" id="kName" value="${esc(it?it.name:'')}"></div>
+      <div class="frow c2"><div class="field"><label>Type</label><select class="inp" id="kType">${ITEM_TYPES.map(t=>`<option value="${t[0]}" ${it&&it.type===t[0]?'selected':''}>${t[1]}</option>`).join('')}</select></div>
+        <div class="field"><label>Code / SKU</label><input class="inp" id="kCode" value="${esc(it?it.code:'')}"></div></div>
+      <div class="frow c3"><div class="field"><label>Unit</label><select class="inp" id="kUnit">${UNITS.map(u=>`<option ${it&&it.unit===u?'selected':''}>${u}</option>`).join('')}</select></div>
+        <div class="field"><label>Currency</label><select class="inp" id="kCur">${Object.keys(CURRENCIES).map(k=>`<option ${((it&&it.currency)||p.currency)===k?'selected':''}>${k}</option>`).join('')}</select></div>
+        <div class="field"><label>Unit price</label><input class="inp right" id="kPrice" value="${it?minorToStr(it.priceMinor,it.currency):'0.00'}"></div></div>
+      <label class="check"><input type="checkbox" id="kTax" ${!it||it.taxable?'checked':''}> Taxable by default</label>`,
+    foot:`${it?'<button class="btn danger" id="kDel">Delete</button>':''}<div class="spacer"></div>
+      <button class="btn" id="kCancel">Cancel</button><button class="btn primary" id="kSave">Save</button>`,
+    onMount:(b,close)=>{
+      $('#kCancel').onclick=close;
+      const del=$('#kDel');if(del)del.onclick=()=>{DB.catalog=DB.catalog.filter(x=>x.id!==id);commit();close();renderView();toast('Item deleted');};
+      $('#kSave').onclick=()=>{
+        const name=$('#kName').value.trim();if(!name){toast('Name required','err');return;}
+        const cur=$('#kCur').value;
+        const data={profileId:p.id,name,type:$('#kType').value,code:$('#kCode').value.trim(),unit:$('#kUnit').value,
+          currency:cur,priceMinor:toMinor($('#kPrice').value,cur),taxable:$('#kTax').checked,active:true};
+        if(it)Object.assign(it,data);else DB.catalog.push({id:uid('cat'),...data});
+        commit();close();renderView();toast('Item saved');
+      };
+    }});
+}
+
+/* ========================= SALES (lists) ========================= */
+function renderSales(v){
+  const p=P();const q=UI.search.toLowerCase();
+  const tab=UI.salesTab;
+  v.innerHTML=`
+    <div class="page-head"><div><h1>Sales</h1><div class="sub">Estimates & invoices for ${esc(p.brandName)}</div></div>
+      <div class="spacer"></div>
+      <div class="btn-row"><button class="btn" id="sNewEst">${icon('doc',16)}New estimate</button>
+      <button class="btn primary" id="sNewInv">${icon('plus',16)}New invoice</button></div></div>
+    <div class="pill-tabs">
+      <button class="${tab==='invoices'?'on':''}" data-t="invoices">Invoices (${scoped(DB.invoices).length})</button>
+      <button class="${tab==='estimates'?'on':''}" data-t="estimates">Estimates (${scoped(DB.estimates).length})</button>
+    </div>
+    <div id="salesBody"></div>`;
+  $('#sNewInv').onclick=()=>openInvoiceEditor(null);
+  $('#sNewEst').onclick=()=>openEstimateEditor(null);
+  $$('.pill-tabs button').forEach(b=>b.onclick=()=>{UI.salesTab=b.dataset.t;renderView();});
+  if(tab==='invoices')renderInvoiceList($('#salesBody'),q);else renderEstimateList($('#salesBody'),q);
+}
+function renderInvoiceList(host,q){
+  const p=P();
+  let list=scoped(DB.invoices).map(i=>({i,pos:invoicePosition(i),c:customer(i.customerId)}))
+    .filter(x=>!q||(x.i.number||'').toLowerCase().includes(q)||(x.c&&x.c.name.toLowerCase().includes(q))||(x.i.poNumber||'').toLowerCase().includes(q));
+  list.sort((a,b)=>(b.i.issueDate||'')<(a.i.issueDate||'')?-1:1);
+  if(!list.length){host.innerHTML=emptyState('sales','No invoices yet','Create your first invoice for this profile.','<button class="btn primary" id="il2">New invoice</button>');
+    $('#il2')&&($('#il2').onclick=()=>openInvoiceEditor(null));return;}
+  host.innerHTML=`<div class="card"><div class="tbl-wrap"><table class="data"><thead><tr>
+    <th>Invoice</th><th>Customer</th><th>Issued</th><th>Status</th><th>Delivery</th><th class="r">Total</th><th class="r">Balance</th></tr></thead><tbody>
+    ${list.map(({i,pos,c})=>`<tr data-oi="${i.id}">
+      <td><b class="linkish">${esc(i.number||'Draft')}</b></td>
+      <td>${esc(c?c.name:'—')}</td>
+      <td>${fmtDate(i.issueDate)}</td>
+      <td>${payBadge(pos,i)} ${dueBadge(i)}</td>
+      <td>${deliveryBadge(i)}</td>
+      <td class="r money">${money(pos.totalMinor,i.currency)}</td>
+      <td class="r money"><b>${money(pos.balanceMinor,i.currency)}</b></td></tr>`).join('')}
+  </tbody></table></div></div>`;
+  $$('[data-oi]',host).forEach(r=>r.onclick=()=>openInvoiceDetail(r.dataset.oi));
+}
+function renderEstimateList(host,q){
+  let list=scoped(DB.estimates).map(e=>({e,c:customer(e.customerId)}))
+    .filter(x=>!q||(x.e.number||'').toLowerCase().includes(q)||(x.c&&x.c.name.toLowerCase().includes(q)));
+  list.sort((a,b)=>(b.e.issueDate||'')<(a.e.issueDate||'')?-1:1);
+  if(!list.length){host.innerHTML=emptyState('doc','No estimates yet','Send a quote or pro forma and convert it to an invoice when accepted.','<button class="btn primary" id="el2">New estimate</button>');
+    $('#el2')&&($('#el2').onclick=()=>openEstimateEditor(null));return;}
+  const stBadge={draft:'b-gray',sent:'b-blue',viewed:'b-blue',accepted:'b-green',declined:'b-red',expired:'b-amber',converted:'b-green'};
+  host.innerHTML=`<div class="card"><div class="tbl-wrap"><table class="data"><thead><tr>
+    <th>Estimate</th><th>Customer</th><th>Date</th><th>Status</th><th class="r">Total</th></tr></thead><tbody>
+    ${list.map(({e,c})=>{const t=computeTotals(e);return `<tr data-oe="${e.id}">
+      <td><b class="linkish">${esc(e.number||'Draft')}</b></td><td>${esc(c?c.name:'—')}</td><td>${fmtDate(e.issueDate)}</td>
+      <td><span class="badge ${stBadge[e.status]||'b-gray'}">${e.status}</span></td>
+      <td class="r money">${money(t.totalMinor,e.currency)}</td></tr>`;}).join('')}
+  </tbody></table></div></div>`;
+  $$('[data-oe]',host).forEach(r=>r.onclick=()=>openEstimateDetail(r.dataset.oe));
+}
+
+/* ========================= INVOICE / ESTIMATE EDITOR ========================= */
+const BIZ_FIELDS={
+  logistics:[['origin','Origin'],['destination','Destination'],['shipmentId','Shipment ID'],['tracking','Tracking ID'],['mode','Mode (air/sea)'],['weight','Weight (actual/vol)'],['packages','Packages'],['deliveryStatus','Delivery status']],
+  grocers:[['lot','Lot / Batch ref'],['deliveryLocation','Delivery location'],['deliveryDate','Delivery date'],['wholesaleRetail','Wholesale / Retail']],
+  commodity:[['commodity','Commodity'],['grade','Specification / Grade'],['incoterm','Incoterm'],['source','Source'],['destination','Destination'],['contract','Contract ref']],
+  garments:[['orderNo','Order #'],['category','Garment category'],['fittingDate','Fitting date'],['promisedDelivery','Promised delivery']],
+  consulting:[['project','Project'],['servicePeriod','Service period']],
+};
+let EDITOR=null; // working document buffer for the open editor
+
+function blankLine(){return {id:uid('li'),name:'',note:'',qty:1,unit:'item',priceMinor:0,kind:'amount',taxable:true};}
+function openInvoiceEditor(id,preset){
+  const p=P();
+  if(id){const inv=byId(DB.invoices,id);EDITOR=JSON.parse(JSON.stringify(inv));}
+  else{
+    EDITOR={id:uid('inv'),profileId:p.id,kind:'invoice',lifecycle:'draft',delivery:'notsent',
+      template:p.template,currency:p.currency,customerId:(preset&&preset.customerId)||'',
+      issueDate:todayStr(),dueDate:addDays(todayStr(),15),poNumber:'',reference:'',memo:'',
+      taxRate:p.taxRate||0,taxInclusive:false,discountType:'none',discountValue:'',shippingValue:'',
+      withholdingPct:'',lines:[blankLine()],bizFields:{},serviceStart:'',serviceEnd:'',
+      createdAt:nowISO()};
+    if(preset&&preset.fromEstimate)Object.assign(EDITOR,preset.fromEstimate);
+  }
+  renderDocEditor('invoice');
+}
+function openEstimateEditor(id){
+  const p=P();
+  if(id){const e=byId(DB.estimates,id);EDITOR=JSON.parse(JSON.stringify(e));}
+  else{EDITOR={id:uid('est'),profileId:p.id,kind:'estimate',status:'draft',template:p.template,
+    currency:p.currency,customerId:'',issueDate:todayStr(),expiryDate:addDays(todayStr(),30),
+    scope:'',depositMinor:0,taxRate:p.taxRate||0,taxInclusive:false,discountType:'none',discountValue:'',
+    shippingValue:'',lines:[blankLine()],bizFields:{},createdAt:nowISO()};}
+  renderDocEditor('estimate');
+}
+
+function renderDocEditor(kind){
+  const p=P();const d=EDITOR;const cur=d.currency;
+  const custs=[...DB.customers].sort((a,b)=>a.name.localeCompare(b.name));
+  const cat=scoped(DB.catalog).filter(i=>i.active!==false);
+  const biz=BIZ_FIELDS[d.template]||[];
+  const m=modal({title:(kind==='invoice'?(d.lifecycle==='draft'?'New invoice':'Edit invoice '+(d.number||'')):(d.number?'Edit estimate '+d.number:'New estimate')),
+    sub:esc(p.brandName)+(p.operatingAs?' — '+esc(p.legalName):''),size:'wide',sticky:true,
+    body:`
+      <div class="frow c2">
+        <div class="field"><label>Customer <span class="req">*</span></label>
+          <select class="inp" id="eCust"><option value="">Select customer…</option>
+          ${custs.map(c=>`<option value="${c.id}" ${d.customerId===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
+        <div class="field"><label>Currency</label><select class="inp" id="eCur">${Object.keys(CURRENCIES).map(k=>`<option ${cur===k?'selected':''}>${k}</option>`).join('')}</select>
+          <div class="hint">One invoice has one accounting currency.</div></div>
+      </div>
+      <div class="frow c3">
+        <div class="field"><label>Issue date</label><input class="inp" type="date" id="eIssue" value="${d.issueDate}"></div>
+        ${kind==='invoice'?`<div class="field"><label>Due date</label><input class="inp" type="date" id="eDue" value="${d.dueDate}"></div>
+          <div class="field"><label>PO / LPO</label><input class="inp" id="ePo" value="${esc(d.poNumber||'')}"></div>`
+        :`<div class="field"><label>Valid until</label><input class="inp" type="date" id="eExp" value="${d.expiryDate||''}"></div>
+          <div class="field"><label>Reference</label><input class="inp" id="eRef" value="${esc(d.reference||'')}"></div>`}
+      </div>
+      ${biz.length?`<details ${anyBiz(d)?'open':''} style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:640;font-size:13px;color:var(--accent);margin-bottom:10px">${templateLabel(d.template)} fields</summary>
+        <div class="frow c3" id="bizWrap">${biz.map(f=>`<div class="field"><label>${f[1]}</label><input class="inp" data-biz="${f[0]}" value="${esc((d.bizFields||{})[f[0]]||'')}"></div>`).join('')}</div></details>`:''}
+      <hr class="sep">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <h4>Line items</h4>
+        <div class="btn-row">${cat.length?`<select class="inp" id="eCatAdd" style="width:auto;padding:6px 9px"><option value="">+ from catalog…</option>${cat.map(i=>`<option value="${i.id}">${esc(i.name)} · ${money(i.priceMinor,i.currency)}</option>`).join('')}</select>`:''}
+        <button class="btn sm" id="eAddLine">${icon('plus',14)}Add line</button></div></div>
+      <div class="tbl-wrap"><table class="li-tbl"><thead><tr><th style="width:40%">Description</th><th>Qty</th><th>Unit</th><th class="r">Price</th><th class="c">Tax</th><th class="r">Amount</th><th></th></tr></thead>
+        <tbody id="eLines"></tbody></table></div>
+      <hr class="sep">
+      <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">
+        <div style="flex:1;min-width:240px">
+          <div class="frow c2">
+            <div class="field"><label>Discount</label><div style="display:flex;gap:6px">
+              <select class="inp" id="eDiscType" style="width:auto"><option value="none" ${d.discountType==='none'?'selected':''}>None</option><option value="percent" ${d.discountType==='percent'?'selected':''}>%</option><option value="fixed" ${d.discountType==='fixed'?'selected':''}>Fixed</option></select>
+              <input class="inp right" id="eDiscVal" value="${esc(d.discountValue||'')}" placeholder="0"></div></div>
+            <div class="field"><label>Tax rate (%)</label><input class="inp right" id="eTaxRate" value="${d.taxRate||0}"></div>
+          </div>
+          <div class="frow c2">
+            <div class="field"><label>Shipping / handling</label><input class="inp right" id="eShip" value="${esc(d.shippingValue||'')}" placeholder="0.00"></div>
+            <div class="field"><label>Withholding (%)</label><input class="inp right" id="eWH" value="${esc(d.withholdingPct||'')}" placeholder="0"></div>
+          </div>
+          ${kind==='estimate'?`<div class="field"><label>Deposit to confirm</label><input class="inp right" id="eDep" value="${d.depositMinor?minorToStr(d.depositMinor,cur):''}" placeholder="0.00"></div>
+            <div class="field"><label>Scope</label><textarea class="inp" id="eScope">${esc(d.scope||'')}</textarea></div>`
+          :`<div class="field"><label>Notes (shown on invoice)</label><textarea class="inp" id="eMemo">${esc(d.memo||'')}</textarea></div>`}
+        </div>
+        <div class="totbox card pad" id="eTotals"></div>
+      </div>`,
+    foot:`<button class="btn" id="ePreview">${icon('eye',15)}Preview</button><div class="spacer"></div>
+      <button class="btn" id="eCancel">Cancel</button>
+      <button class="btn" id="eDraft">Save draft</button>
+      ${kind==='invoice'?`<button class="btn primary" id="eIssue2">Issue invoice</button>`:`<button class="btn primary" id="eSend">Save & send</button>`}`,
+    onClose:()=>{EDITOR=null;}
+  });
+  // render lines + totals
+  function readLinesFromDOM(){
+    d.lines=$$('#eLines tr').map(tr=>{
+      return {id:tr.dataset.lid,name:$('[data-f=name]',tr).value,note:'',
+        qty:num($('[data-f=qty]',tr).value,0),unit:$('[data-f=unit]',tr).value,
+        priceMinor:toMinor($('[data-f=price]',tr).value,cur),kind:'amount',
+        taxable:$('[data-f=tax]',tr).checked};
+    });
+  }
+  function drawLines(){
+    $('#eLines').innerHTML=d.lines.map(li=>`<tr data-lid="${li.id}">
+      <td><input class="inp" data-f="name" value="${esc(li.name)}" placeholder="Description"></td>
+      <td><input class="inp liq right" data-f="qty" value="${li.qty}"></td>
+      <td><input class="inp" data-f="unit" value="${esc(li.unit)}" list="unitList" style="width:92px"></td>
+      <td><input class="inp lir right" data-f="price" value="${minorToStr(li.priceMinor,cur)}"></td>
+      <td class="c"><input type="checkbox" data-f="tax" ${li.taxable?'checked':''}></td>
+      <td class="r money" data-amt><b>${money(lineAmount(li),cur)}</b></td>
+      <td><button class="li-del" data-del="${li.id}">${icon('trash',15)}</button></td></tr>`).join('')
+      +`<datalist id="unitList">${UNITS.map(u=>`<option value="${u}">`).join('')}</datalist>`;
+    $$('#eLines [data-del]').forEach(b=>b.onclick=()=>{readLinesFromDOM();d.lines=d.lines.filter(x=>x.id!==b.dataset.del);if(!d.lines.length)d.lines=[blankLine()];drawLines();drawTotals();});
+    $$('#eLines input').forEach(inp=>inp.oninput=()=>{const tr=inp.closest('tr');const li={qty:num($('[data-f=qty]',tr).value),priceMinor:toMinor($('[data-f=price]',tr).value,cur),kind:'amount'};
+      $('[data-amt] b',tr).textContent=money(lineAmount(li),cur);drawTotals();});
+  }
+  function syncDoc(){
+    readLinesFromDOM();
+    d.customerId=$('#eCust').value;d.currency=$('#eCur').value;d.issueDate=$('#eIssue').value;
+    if($('#eDue'))d.dueDate=$('#eDue').value; if($('#eExp'))d.expiryDate=$('#eExp').value;
+    if($('#ePo'))d.poNumber=$('#ePo').value; if($('#eRef'))d.reference=$('#eRef').value;
+    d.discountType=$('#eDiscType').value;d.discountValue=$('#eDiscVal').value;d.taxRate=num($('#eTaxRate').value);
+    d.shippingValue=$('#eShip').value;d.withholdingPct=$('#eWH').value;
+    if($('#eMemo'))d.memo=$('#eMemo').value; if($('#eScope'))d.scope=$('#eScope').value;
+    if($('#eDep'))d.depositMinor=toMinor($('#eDep').value,d.currency);
+    d.bizFields=d.bizFields||{};$$('[data-biz]').forEach(x=>d.bizFields[x.dataset.biz]=x.value);
+  }
+  function drawTotals(){
+    syncDoc();const t=computeTotals(d);
+    $('#eTotals').innerHTML=`
+      <div class="totrow"><span>Subtotal</span><span class="money">${money(t.subtotalMinor,cur)}</span></div>
+      ${t.discountMinor>0?`<div class="totrow"><span>Discount</span><span class="money">−${money(t.discountMinor,cur)}</span></div>`:''}
+      ${t.taxMinor>0?`<div class="totrow"><span>Tax (${t.taxRate}%)</span><span class="money">${money(t.taxMinor,cur)}</span></div>`:''}
+      ${t.shippingMinor>0?`<div class="totrow"><span>Shipping</span><span class="money">${money(t.shippingMinor,cur)}</span></div>`:''}
+      ${t.withholdingMinor>0?`<div class="totrow"><span>Withholding</span><span class="money">−${money(t.withholdingMinor,cur)}</span></div>`:''}
+      <div class="totrow grand"><span>Total</span><span class="money">${money(t.totalMinor,cur)}</span></div>`;
+  }
+  drawLines();drawTotals();
+  $$('#eLines').forEach(()=>{});
+  ['#eDiscType','#eDiscVal','#eTaxRate','#eShip','#eWH','#eCur'].forEach(s=>{const el=$(s);if(el)el.oninput=el.onchange=drawTotals;});
+  $('#eAddLine').onclick=()=>{readLinesFromDOM();d.lines.push(blankLine());drawLines();drawTotals();};
+  const catAdd=$('#eCatAdd');if(catAdd)catAdd.onchange=()=>{const it=byId(DB.catalog,catAdd.value);if(!it)return;readLinesFromDOM();
+    d.lines.push({id:uid('li'),name:it.name,note:'',qty:1,unit:it.unit,priceMinor:it.priceMinor,kind:'amount',taxable:it.taxable});catAdd.value='';drawLines();drawTotals();};
+  $('#eCust').onchange=()=>{const c=customer($('#eCust').value);if(c&&c.currency){/* keep invoice currency but hint */}
+    if(c&&$('#eDue')&&EDITOR.lifecycle==='draft'){$('#eDue').value=addDays($('#eIssue').value,c.terms||0);}drawTotals();};
+  $('#eCancel').onclick=()=>m.close();
+  $('#ePreview').onclick=()=>{syncDoc();previewEditorDoc(kind);};
+  $('#eDraft').onclick=()=>{syncDoc();if(!d.customerId){toast('Select a customer','err');return;}saveEditorDraft(kind);m.close();};
+  if(kind==='invoice')$('#eIssue2').onclick=()=>{syncDoc();issueInvoiceFromEditor();};
+  else $('#eSend').onclick=()=>{syncDoc();if(!d.customerId){toast('Select a customer','err');return;}saveEditorDraft('estimate');const saved=byId(DB.estimates,d.id);m.close();openEstimateDetail(saved.id);};
+}
+function anyBiz(d){return d.bizFields&&Object.values(d.bizFields).some(Boolean);}
+function templateLabel(t){return ({logistics:'Logistics',grocers:'Grocery order',commodity:'Commodity',garments:'Garment order',consulting:'Consulting'}[t])||'Business';}
+
+/* ---- Save / issue ---- */
+function validLines(d){return (d.lines||[]).some(li=>li.name.trim()&&(li.priceMinor!==0||num(li.qty)!==0));}
+function saveEditorDraft(kind){
+  const d=EDITOR;d.updatedAt=nowISO();
+  const store=kind==='invoice'?DB.invoices:DB.estimates;
+  const existing=byId(store,d.id);
+  if(existing)Object.assign(existing,d);else store.push(JSON.parse(JSON.stringify(d)));
+  audit(kind+'.save.draft',(d.number||'draft'));commit();renderView();toast('Draft saved');
+}
+function issueInvoiceFromEditor(){
+  const d=EDITOR;const p=P();
+  if(!d.customerId){toast('Select a customer','err');return;}
+  if(!validLines(d)){toast('Add at least one line item','err');return;}
+  // finalize totals + immutable snapshot
+  d.lifecycle='issued';d.issuedAt=nowISO();
+  d.number=d.number||reserveNumber(p,'invoice');
+  d.seller=snapshotSeller(p);
+  d.customerSnap=snapshotCustomer(customer(d.customerId));
+  d.totals=computeTotals(d);
+  const existing=byId(DB.invoices,d.id);
+  if(existing)Object.assign(existing,d);else DB.invoices.push(JSON.parse(JSON.stringify(d)));
+  audit('invoice.issue',d.number+' · '+money(d.totals.totalMinor,d.currency),d.id);
+  scheduleReminders(byId(DB.invoices,d.id));
+  commit();closeModal();EDITOR=null;renderView();toast('Invoice '+d.number+' issued');
+  openInvoiceDetail(d.id);
+}
+function previewEditorDoc(kind){
+  const d=JSON.parse(JSON.stringify(EDITOR));const p=P();
+  d.seller=snapshotSeller(p);d.customerSnap=snapshotCustomer(customer(d.customerId));
+  d.totals=computeTotals(d);if(kind==='invoice'&&!d.number)d.lifecycle='draft';
+  const inner=kind==='invoice'?renderInvoiceDoc(d):renderEstimateDoc(d);
+  modal({title:'Preview',sub:'Not yet issued',size:'wide',
+    body:`<div class="doc-scroll" style="padding:16px;margin:-22px">${inner}</div>`,
+    foot:`<div class="spacer"></div><button class="btn" onclick="printDoc(document.querySelector('#mbody .paper').outerHTML)">${icon('print',15)}Print</button><button class="btn primary" id="pvBack">Back to edit</button>`,
+    onMount:(b,close)=>{$('#pvBack').onclick=close;}});
+}
+
+/* ========================= INVOICE DETAIL ========================= */
+function openInvoiceDetail(id){
+  const inv=byId(DB.invoices,id);if(!inv)return;
+  const pos=invoicePosition(inv);const cur=inv.currency;
+  const c=customer(inv.customerId);
+  const issued=inv.lifecycle==='issued';
+  const events=buildInvoiceTimeline(inv);
+  modal({title:'Invoice '+(inv.number||'(draft)'),sub:esc(inv.seller?inv.seller.brandName:P().brandName),size:'wide',
+    body:`
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        ${payBadge(pos,inv)} ${dueBadge(inv)} ${deliveryBadge(inv)}
+        <span class="chip">${money(pos.totalMinor,cur)} total</span>
+        <span class="chip" style="color:var(--accent);border-color:var(--accent-line)">${money(pos.balanceMinor,cur)} due</span>
+      </div>
+      ${inv.lifecycle==='draft'?`<div class="warnbox">${icon('alert',16)}<div>This is a <b>draft</b>. It has no final number and is not a valid invoice until issued.</div></div>`:''}
+      <div class="btn-row doc-actions no-print" style="margin-bottom:16px">
+        ${issued&&pos.payStatus!=='paid'?`<button class="btn primary" id="dPay">${icon('pay',15)}Record payment</button>`:''}
+        ${inv.lifecycle==='draft'?`<button class="btn primary" id="dEdit">${icon('edit',15)}Edit & issue</button>`:''}
+        <button class="btn" id="dPrint">${icon('print',15)}Print / PDF</button>
+        <button class="btn" id="dSend">${icon('share',15)}Send…</button>
+        <button class="btn" id="dDl">${icon('dl',15)}Download</button>
+        ${issued&&pos.payStatus!=='paid'?`<button class="btn" id="dRemind">${icon('msg',15)}Reminder</button>`:''}
+        ${issued?`<button class="btn" id="dCredit">${icon('doc',15)}Credit note</button>`:''}
+        ${issued&&inv.lifecycle!=='void'?`<button class="btn danger" id="dVoid">Void</button>`:''}
+      </div>
+      <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start">
+        <div style="flex:2;min-width:300px" class="doc-scroll" id="invPaper"></div>
+        <div style="flex:1;min-width:220px">
+          <div class="card pad" style="margin-bottom:14px"><h4 style="margin-bottom:10px">Timeline</h4>
+            <div class="timeline">${events.map(e=>`<div class="tl-item"><div class="tl-time">${fmtDateTime(e.at)}</div><div class="tl-txt">${e.txt}</div></div>`).join('')||'<div style="color:var(--muted);font-size:12px">No events yet</div>'}</div></div>
+        </div>
+      </div>`,
+    onMount:(b,close)=>{
+      $('#invPaper').innerHTML=renderInvoiceDoc(inv);
+      const paperHTML=()=>$('#invPaper .paper').outerHTML;
+      $('#dPrint')&&($('#dPrint').onclick=()=>printDoc(paperHTML()));
+      $('#dDl')&&($('#dDl').onclick=()=>{markDelivered(inv,'download');downloadFile((inv.number||'invoice')+'.html',standaloneDoc('Invoice '+inv.number,paperHTML()));toast('Downloaded');refreshDetail(id,close);});
+      $('#dSend')&&($('#dSend').onclick=()=>openSendDialog(inv,'invoice',()=>refreshDetail(id,close)));
+      $('#dPay')&&($('#dPay').onclick=()=>{close();openPaymentEditor(null,{invoiceId:inv.id});});
+      $('#dEdit')&&($('#dEdit').onclick=()=>{close();openInvoiceEditor(inv.id);});
+      $('#dRemind')&&($('#dRemind').onclick=()=>{close();sendReminderNow(inv.id);});
+      $('#dVoid')&&($('#dVoid').onclick=()=>voidInvoice(inv,()=>refreshDetail(id,close)));
+      $('#dCredit')&&($('#dCredit').onclick=()=>openCreditNote(inv,()=>refreshDetail(id,close)));
+    }});
+}
+function refreshDetail(id,close){close();openInvoiceDetail(id);}
+function buildInvoiceTimeline(inv){
+  const ev=[];
+  if(inv.createdAt)ev.push({at:inv.createdAt,txt:'Draft created'});
+  if(inv.issuedAt)ev.push({at:inv.issuedAt,txt:`Issued as <b>${esc(inv.number)}</b> · ${money((inv.totals||computeTotals(inv)).totalMinor,inv.currency)}`});
+  (inv.deliveryEvents||[]).forEach(d=>ev.push({at:d.at,txt:`${esc(d.label)}`}));
+  DB.payments.filter(p=>(p.allocations||[]).some(a=>a.invoiceId===inv.id)).forEach(p=>{
+    const amt=(p.allocations||[]).filter(a=>a.invoiceId===inv.id).reduce((s,a)=>s+a.amountMinor,0);
+    ev.push({at:p.createdAt||p.date,txt:`Payment ${money(amt,inv.currency)} · ${esc(methodLabel(p.method))}`});});
+  DB.receipts.filter(r=>r.invoiceId===inv.id).forEach(r=>ev.push({at:r.createdAt,txt:`Receipt <b>${esc(r.number)}</b> issued`}));
+  DB.credits.filter(c=>c.invoiceId===inv.id).forEach(c=>ev.push({at:c.createdAt,txt:`Credit note <b>${esc(c.number)}</b> · ${money(c.amountMinor,inv.currency)}`}));
+  if(inv.voidedAt)ev.push({at:inv.voidedAt,txt:'<b>Voided</b>'});
+  return ev.sort((a,b)=>new Date(b.at)-new Date(a.at));
+}
+function markDelivered(inv,channel){
+  inv.delivery = channel==='email'||channel==='sms'?'sent':(inv.delivery==='notsent'?'delivered':inv.delivery);
+  inv.deliveryEvents=inv.deliveryEvents||[];
+  const label={email:'Sent by email',sms:'Sent by text',print:'Printed',download:'Downloaded',share:'Shared',manual:'Marked delivered'}[channel]||'Delivered';
+  inv.deliveryEvents.push({at:nowISO(),channel,label});
+  audit('invoice.deliver',inv.number+' · '+label,inv.id);commit();
+}
+function voidInvoice(inv,cb){
+  const pos=invoicePosition(inv);
+  const msg=pos.netPaidMinor>0?'This invoice has payments. Voiding keeps the audit trail; consider a credit note instead. Continue?':'Void this invoice? The number is retired and never reused.';
+  confirmModal('Void invoice',msg,()=>{inv.lifecycle='void';inv.voidedAt=nowISO();
+    DB.messages.filter(m=>m.invoiceId===inv.id&&m.status==='pending').forEach(m=>m.status='cancelled');
+    audit('invoice.void',inv.number,inv.id);commit();toast('Invoice voided');renderView();cb&&cb();},true);
+}
+
+/* ---- Send dialog: choose channel, compose, hand off ---- */
+function openSendDialog(doc,kind,cb){
+  const p=doc.seller||snapshotSeller(P());
+  const c=doc.customerSnap||snapshotCustomer(customer(doc.customerId));
+  const pos=kind==='invoice'?invoicePosition(doc):null;
+  const ctx=kind==='invoice'?{seller:p,currency:doc.currency,number:doc.number,dueDate:doc.dueDate,
+      customerName:c?c.name:'',totalMinor:pos.totalMinor,balanceMinor:pos.balanceMinor}
+    :{seller:p,currency:doc.currency,number:doc.number,customerName:c?c.name:''};
+  const msg=composeMessage(kind==='invoice'?'invoice':'invoice',ctx);
+  modal({title:'Send '+(kind)+' '+(doc.number||''),size:'',
+    body:`
+      <div class="help">${icon('info',16)}<div>Email and text hand off to your device's Mail and Messages apps with everything pre-filled — nothing is sent from your device automatically. You can also print, download, or copy.</div></div>
+      <div class="frow c2"><div class="field"><label>To (email)</label><input class="inp" id="sTo" value="${esc(c?c.email:'')}"></div>
+        <div class="field"><label>To (phone)</label><input class="inp" id="sPhone" value="${esc(c?c.phone:'')}"></div></div>
+      <div class="field"><label>Subject</label><input class="inp" id="sSub" value="${esc(msg.subject)}"></div>
+      <div class="field"><label>Message</label><textarea class="inp" id="sBody" style="min-height:150px">${esc(msg.body)}</textarea></div>
+      <div class="field"><label>Text (SMS) version</label><textarea class="inp" id="sSms" style="min-height:70px">${esc(msg.sms)}</textarea></div>`,
+    foot:`<div class="spacer"></div>
+      <button class="btn" id="sCopy">${icon('copy',15)}Copy</button>
+      <button class="btn" id="sSms2">${icon('sms',15)}Text</button>
+      <button class="btn primary" id="sMail">${icon('mail',15)}Email</button>`,
+    onMount:(b,close)=>{
+      $('#sMail').onclick=()=>{openMail($('#sTo').value,$('#sSub').value,$('#sBody').value);if(kind==='invoice')markDelivered(doc,'email');toast('Opening email…');close();cb&&cb();};
+      $('#sSms2').onclick=()=>{openSms($('#sPhone').value,$('#sSms').value);if(kind==='invoice')markDelivered(doc,'sms');toast('Opening messages…');close();cb&&cb();};
+      $('#sCopy').onclick=()=>copyText($('#sBody').value);
+    }});
+}
+
+/* ========================= ESTIMATE DETAIL ========================= */
+function openEstimateDetail(id){
+  const e=byId(DB.estimates,id);if(!e)return;
+  const p=P();const t=computeTotals(e);const c=customer(e.customerId);
+  if(!e.number&&e.status!=='draft'){}
+  const snap={...e,seller:snapshotSeller(p),customerSnap:snapshotCustomer(c),totals:t};
+  modal({title:'Estimate '+(e.number||'(draft)'),sub:esc(p.brandName),size:'wide',
+    body:`
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        <span class="badge ${({draft:'b-gray',sent:'b-blue',accepted:'b-green',declined:'b-red',expired:'b-amber',converted:'b-green'})[e.status]||'b-gray'}">${e.status}</span>
+        <span class="chip">${money(t.totalMinor,e.currency)}</span></div>
+      <div class="btn-row doc-actions no-print" style="margin-bottom:16px">
+        ${e.status!=='converted'?`<button class="btn primary" id="eConv">${icon('arrow',15)}Convert to invoice</button>`:''}
+        ${e.status==='draft'||e.status==='sent'?`<button class="btn" id="eAccept">${icon('check',15)}Mark accepted</button>`:''}
+        <button class="btn" id="ePrint">${icon('print',15)}Print</button>
+        <button class="btn" id="eSend2">${icon('share',15)}Send</button>
+        <button class="btn" id="eEdit">${icon('edit',15)}Edit</button>
+        <button class="btn danger" id="eDel">Delete</button>
+      </div>
+      <div class="doc-scroll" id="estPaper"></div>`,
+    onMount:(b,close)=>{
+      $('#estPaper').innerHTML=renderEstimateDoc(snap);
+      $('#ePrint').onclick=()=>printDoc($('#estPaper .paper').outerHTML);
+      $('#eEdit')&&($('#eEdit').onclick=()=>{close();openEstimateEditor(id);});
+      $('#eDel').onclick=()=>confirmModal('Delete estimate','Remove this estimate?',()=>{DB.estimates=DB.estimates.filter(x=>x.id!==id);commit();close();renderView();toast('Deleted');},true);
+      $('#eSend2').onclick=()=>{if(!e.number){e.number=reserveNumber(p,'estimate');e.status=e.status==='draft'?'sent':e.status;e.seller=snapshotSeller(p);commit();}openSendDialog({...e,seller:snapshotSeller(p),customerSnap:snapshotCustomer(c)},'estimate',()=>{close();openEstimateDetail(id);});};
+      const acc=$('#eAccept');if(acc)acc.onclick=()=>{e.status='accepted';e.acceptedAt=nowISO();e.acceptedBy=c?c.name:'';if(!e.number)e.number=reserveNumber(p,'estimate');audit('estimate.accept',e.number);commit();close();openEstimateDetail(id);toast('Marked accepted');};
+      const cv=$('#eConv');if(cv)cv.onclick=()=>{close();convertEstimate(e);};
+    }});
+}
+function convertEstimate(e){
+  const p=P();
+  const preset={fromEstimate:{template:e.template,currency:e.currency,customerId:e.customerId,
+    lines:JSON.parse(JSON.stringify(e.lines)),taxRate:e.taxRate,discountType:e.discountType,discountValue:e.discountValue,
+    shippingValue:e.shippingValue,bizFields:JSON.parse(JSON.stringify(e.bizFields||{})),reference:e.number,
+    sourceEstimateId:e.id}};
+  openInvoiceEditor(null,preset);
+  // mark estimate converted after issue happens; also snapshot immutably
+  e.status='converted';e.convertedAt=nowISO();
+  e.snapshot=JSON.parse(JSON.stringify({...e,seller:snapshotSeller(p),totals:computeTotals(e)}));
+  audit('estimate.convert',e.number||'estimate');commit();
+}
+
+/* ========================= PAYMENTS + RECEIPTS ENGINE ========================= */
+function openPaymentEditor(id,preset){
+  const p=P();const cur=p.currency;
+  // outstanding invoices for this profile
+  const openInvs=scoped(DB.invoices).filter(i=>i.lifecycle==='issued'&&invoicePosition(i).balanceMinor>0);
+  const custWithOpen=[...new Set(openInvs.map(i=>i.customerId))];
+  let selCustomer = preset&&preset.invoiceId ? byId(DB.invoices,preset.invoiceId).customerId : '';
+  modal({title:'Record payment',sub:esc(p.brandName),size:'',sticky:true,
+    body:`
+      <div class="help">${icon('info',16)}<div>Payments are recorded as append-only ledger events. Balances and receipts are computed automatically.</div></div>
+      <div class="field"><label>Customer <span class="req">*</span></label>
+        <select class="inp" id="pCust"><option value="">Select…</option>
+        ${[...DB.customers].sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`<option value="${c.id}" ${selCustomer===c.id?'selected':''}>${esc(c.name)}${custWithOpen.includes(c.id)?' • open balance':''}</option>`).join('')}</select></div>
+      <div class="frow c3">
+        <div class="field"><label>Amount <span class="req">*</span></label><div class="inp-group"><span class="pre">${ccy(cur).sym}</span><input class="inp right" id="pAmt" placeholder="0.00"></div></div>
+        <div class="field"><label>Date</label><input class="inp" type="date" id="pDate" value="${todayStr()}"></div>
+        <div class="field"><label>Method</label><select class="inp" id="pMethod">${['etransfer','bank','cash','card','cheque','mobile','credit','other'].map(m=>`<option value="${m}">${methodLabel(m)}</option>`).join('')}</select></div>
+      </div>
+      <div class="frow c2"><div class="field"><label>Reference</label><input class="inp" id="pRef" placeholder="Transaction / cheque #"></div>
+        <div class="field"><label>Status</label><select class="inp" id="pStatus"><option value="confirmed">Confirmed / cleared</option><option value="pending">Pending review</option></select></div></div>
+      <hr class="sep">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h4>Apply to invoices</h4><button class="btn sm" id="pAuto">Auto-allocate</button></div>
+      <div id="pAlloc"><div style="color:var(--muted);font-size:13px">Select a customer to see open invoices.</div></div>
+      <label class="check" style="margin-top:12px"><input type="checkbox" id="pReceipt" checked> Issue receipt automatically</label>`,
+    foot:`<div class="spacer"></div><button class="btn" id="pCancel">Cancel</button><button class="btn primary" id="pSave">Record payment</button>`,
+    onMount:(b,close)=>{
+      function drawAlloc(){
+        const cid=$('#pCust').value;const wrap=$('#pAlloc');
+        const invs=scoped(DB.invoices).filter(i=>i.customerId===cid&&i.lifecycle==='issued'&&invoicePosition(i).balanceMinor>0)
+          .sort((a,b)=>(a.dueDate||'')<(b.dueDate||'')?-1:1);
+        if(!cid){wrap.innerHTML='<div style="color:var(--muted);font-size:13px">Select a customer to see open invoices.</div>';return;}
+        if(!invs.length){wrap.innerHTML='<div style="color:var(--muted);font-size:13px">No open invoices — this will be recorded as customer credit.</div>';return;}
+        wrap.innerHTML=invs.map(i=>{const pos=invoicePosition(i);const pre=preset&&preset.invoiceId===i.id;
+          return `<div class="allocrow"><div><b>${esc(i.number)}</b> <span style="color:var(--muted);font-size:12px">· due ${fmtDate(i.dueDate)} · ${money(pos.balanceMinor,i.currency)} open</span></div>
+          <div style="color:var(--muted);font-size:12px" class="r">${money(pos.balanceMinor,i.currency)}</div>
+          <div class="inp-group"><span class="pre">${ccy(i.currency).sym}</span><input class="inp right pAllocInp" data-inv="${i.id}" data-max="${pos.balanceMinor}" value="${pre?minorToStr(pos.balanceMinor,i.currency):''}" placeholder="0.00"></div></div>`;}).join('');
+      }
+      function autoAllocate(){
+        let amt=toMinor($('#pAmt').value,cur);
+        $$('.pAllocInp').forEach(inp=>{const max=parseInt(inp.dataset.max);const use=Math.min(amt,max);
+          inp.value=use>0?minorToStr(use,cur):'';amt-=use;});
+      }
+      $('#pCust').onchange=drawAlloc;drawAlloc();
+      $('#pAuto').onclick=autoAllocate;
+      $('#pAmt').oninput=()=>{};
+      $('#pCancel').onclick=close;
+      $('#pSave').onclick=()=>{
+        const cid=$('#pCust').value;if(!cid){toast('Select a customer','err');return;}
+        const amt=toMinor($('#pAmt').value,cur);if(amt<=0){toast('Enter an amount','err');return;}
+        const allocs=$$('.pAllocInp').map(inp=>({invoiceId:inp.dataset.inv,amountMinor:toMinor(inp.value,cur)})).filter(a=>a.amountMinor>0);
+        const allocTotal=allocs.reduce((s,a)=>s+a.amountMinor,0);
+        if(allocTotal>amt){toast('Allocated more than the payment amount','err');return;}
+        // over-allocation guard per invoice
+        for(const a of allocs){const inv=byId(DB.invoices,a.invoiceId);const bal=invoicePosition(inv).balanceMinor;
+          if(a.amountMinor>bal+ (DB.settings.roundingToleranceMinor||0)){toast('Allocation exceeds balance on '+inv.number,'err');return;}}
+        recordPayment({customerId:cid,amountMinor:amt,date:$('#pDate').value,method:$('#pMethod').value,
+          reference:$('#pRef').value.trim(),status:$('#pStatus').value,allocations:allocs,
+          issueReceipt:$('#pReceipt').checked});
+        close();
+      };
+    }});
+}
+function detectDuplicatePayment(pay){
+  return DB.payments.find(p=>p.customerId===pay.customerId&&p.amountMinor===pay.amountMinor&&p.date===pay.date&&p.method===pay.method&&(p.reference||'')===(pay.reference||''));
+}
+function recordPayment(data){
+  const p=P();
+  const pay={id:uid('pay'),profileId:p.id,customerId:data.customerId,number:reserveNumber(p,'receipt').replace(p.seq.receipt.prefix,'PAY-'),
+    date:data.date,amountMinor:data.amountMinor,currency:p.currency,method:data.method,reference:data.reference,
+    status:data.status,allocations:data.allocations,createdAt:nowISO()};
+  // undo the receipt-number reservation used above for the PAY id (payments get their own simple id)
+  p.seq.receipt.next-=1;
+  const dup=detectDuplicatePayment(pay);
+  const finish=()=>{
+    DB.payments.push(pay);
+    audit('payment.record',money(pay.amountMinor,pay.currency)+' · '+methodLabel(pay.method),pay.id);
+    // customer credit if unallocated remainder
+    const allocated=pay.allocations.reduce((s,a)=>s+a.amountMinor,0);
+    const remainder=pay.amountMinor-allocated;
+    if(remainder>0){pay.creditMinor=remainder;audit('credit.add','Customer credit '+money(remainder,pay.currency),pay.id);}
+    // generate receipts + stop reminders
+    if(data.issueReceipt&&pay.status==='confirmed'){
+      pay.allocations.forEach(a=>{issueReceiptForAllocation(pay,a);});
+      if(!pay.allocations.length){/* pure credit — a credit receipt */issueCreditReceipt(pay,remainder);}
+    }
+    // stop reminders where balance now zero
+    pay.allocations.forEach(a=>{const inv=byId(DB.invoices,a.invoiceId);if(inv&&invoicePosition(inv).balanceMinor<=0){
+      DB.messages.filter(m=>m.invoiceId===inv.id&&m.status==='pending').forEach(m=>m.status='cancelled');}});
+    commit();renderView();toast('Payment recorded'+(data.issueReceipt?' · receipt issued':''));
+  };
+  if(dup){confirmModal('Possible duplicate','A payment with the same amount, date, method and reference already exists ('+dup.number+'). Record anyway?',finish);}
+  else finish();
+}
+function issueReceiptForAllocation(pay,alloc){
+  const inv=byId(DB.invoices,alloc.invoiceId);if(!inv)return;
+  const p=P();const pos=invoicePosition(inv);
+  const rct={id:uid('rct'),profileId:p.id,number:reserveNumber(p,'receipt'),date:pay.date,
+    invoiceId:inv.id,invoiceNumber:inv.number,paymentId:pay.id,method:pay.method,reference:pay.reference,
+    currency:inv.currency,amountMinor:alloc.amountMinor,
+    invoiceTotalMinor:pos.totalMinor,cumulativePaidMinor:pos.netPaidMinor,balanceAfterMinor:pos.balanceMinor,
+    seller:inv.seller,customerSnap:inv.customerSnap,createdAt:nowISO()};
+  DB.receipts.push(rct);
+  audit('receipt.issue',rct.number+' · '+money(rct.amountMinor,rct.currency),rct.id);
+  // queue a receipt message (customer gets receipt + updated balance)
+  queueMessage({type:'receipt',invoiceId:inv.id,receiptId:rct.id,customerId:inv.customerId,
+    label:`Receipt ${rct.number} · ${money(rct.amountMinor,rct.currency)}${rct.balanceAfterMinor<=0?' · paid in full':' · balance '+money(rct.balanceAfterMinor,rct.currency)}`});
+}
+function issueCreditReceipt(pay,amount){
+  const p=P();
+  const rct={id:uid('rct'),profileId:p.id,number:reserveNumber(p,'receipt'),date:pay.date,
+    invoiceId:null,invoiceNumber:'Customer credit',paymentId:pay.id,method:pay.method,reference:pay.reference,
+    currency:pay.currency,amountMinor:amount,invoiceTotalMinor:amount,cumulativePaidMinor:amount,balanceAfterMinor:0,
+    seller:snapshotSeller(p),customerSnap:snapshotCustomer(customer(pay.customerId)),createdAt:nowISO()};
+  DB.receipts.push(rct);audit('receipt.credit',rct.number,rct.id);
+}
+
+/* ========================= PAYMENTS VIEW ========================= */
+function renderPayments(v){
+  const p=P();const cur=p.currency;const q=UI.search.toLowerCase();
+  const tab=UI.payTab;
+  const pays=DB.payments.filter(x=>x.profileId===p.id).sort((a,b)=>(b.date||'')<(a.date||'')?-1:1);
+  const rcts=DB.receipts.filter(x=>x.profileId===p.id).sort((a,b)=>(b.date||'')<(a.date||'')?-1:1);
+  const openInvs=scoped(DB.invoices).filter(i=>i.lifecycle==='issued'&&invoicePosition(i).payStatus!=='paid')
+    .sort((a,b)=>dueState(b).days-dueState(a).days);
+  v.innerHTML=`
+    <div class="page-head"><div><h1>Payments</h1><div class="sub">Incoming, receipts & open balances for ${esc(p.brandName)}</div></div>
+      <div class="spacer"></div><button class="btn primary" id="pNew">${icon('pay',16)}Record payment</button></div>
+    <div class="pill-tabs">
+      <button class="${tab==='incoming'?'on':''}" data-t="incoming">Payments (${pays.length})</button>
+      <button class="${tab==='receipts'?'on':''}" data-t="receipts">Receipts (${rcts.length})</button>
+      <button class="${tab==='open'?'on':''}" data-t="open">Open balances (${openInvs.length})</button>
+    </div><div id="payBody"></div>`;
+  $('#pNew').onclick=()=>openPaymentEditor(null);
+  $$('.pill-tabs button').forEach(b=>b.onclick=()=>{UI.payTab=b.dataset.t;renderView();});
+  const host=$('#payBody');
+  if(tab==='incoming'){
+    host.innerHTML=pays.length?`<div class="card"><div class="tbl-wrap"><table class="data"><thead><tr><th>Date</th><th>Customer</th><th>Method</th><th>Reference</th><th>Applied to</th><th class="r">Amount</th></tr></thead><tbody>
+      ${pays.map(pm=>{const c=customer(pm.customerId);const inv=pm.allocations&&pm.allocations[0]?byId(DB.invoices,pm.allocations[0].invoiceId):null;
+        return `<tr data-rct="${pm.id}"><td>${fmtDate(pm.date)}</td><td>${esc(c?c.name:'—')}</td><td>${esc(methodLabel(pm.method))}</td>
+        <td style="color:var(--muted)">${esc(pm.reference||'—')}</td><td>${(pm.allocations||[]).map(a=>{const i=byId(DB.invoices,a.invoiceId);return i?esc(i.number):'';}).filter(Boolean).join(', ')||'<span class="chip">Credit</span>'}</td>
+        <td class="r money"><b>${money(pm.amountMinor,pm.currency)}</b> ${pm.status==='pending'?'<span class="badge b-amber">Pending</span>':''}</td></tr>`;}).join('')}
+      </tbody></table></div></div>`:emptyState('pay','No payments yet','Record a payment to generate receipts and update balances.','');
+    $$('[data-rct]',host).forEach(r=>r.onclick=()=>{const pm=byId(DB.payments,r.dataset.rct);const rc=DB.receipts.find(x=>x.paymentId===pm.id);if(rc)openReceiptViewer(rc.id);});
+  }else if(tab==='receipts'){
+    host.innerHTML=rcts.length?`<div class="card"><div class="tbl-wrap"><table class="data"><thead><tr><th>Receipt</th><th>Date</th><th>For invoice</th><th class="r">Amount</th><th class="r">Balance after</th></tr></thead><tbody>
+      ${rcts.map(r=>`<tr data-rid="${r.id}"><td><b class="linkish">${esc(r.number)}</b></td><td>${fmtDate(r.date)}</td><td>${esc(r.invoiceNumber||'—')}</td>
+        <td class="r money">${money(r.amountMinor,r.currency)}</td><td class="r money">${money(r.balanceAfterMinor,r.currency)}</td></tr>`).join('')}
+      </tbody></table></div></div>`:emptyState('doc','No receipts yet','Receipts are created automatically when you record confirmed payments.','');
+    $$('[data-rid]',host).forEach(r=>r.onclick=()=>openReceiptViewer(r.dataset.rid));
+  }else{
+    host.innerHTML=openInvs.length?`<div class="card"><div class="tbl-wrap"><table class="data"><thead><tr><th>Invoice</th><th>Customer</th><th>Due</th><th>Status</th><th class="r">Balance</th><th></th></tr></thead><tbody>
+      ${openInvs.map(i=>{const pos=invoicePosition(i);const c=customer(i.customerId);return `<tr data-oi="${i.id}"><td><b class="linkish">${esc(i.number)}</b></td><td>${esc(c?c.name:'—')}</td>
+        <td>${fmtDate(i.dueDate)}</td><td>${payBadge(pos,i)} ${dueBadge(i)}</td><td class="r money"><b>${money(pos.balanceMinor,i.currency)}</b></td>
+        <td class="r"><button class="btn sm primary" data-payi="${i.id}">Pay</button></td></tr>`;}).join('')}
+      </tbody></table></div></div>`:emptyState('check','Nothing outstanding','All issued invoices for this profile are paid.','');
+    $$('[data-oi]',host).forEach(r=>r.onclick=(e)=>{if(e.target.closest('[data-payi]'))return;openInvoiceDetail(r.dataset.oi);});
+    $$('[data-payi]',host).forEach(b=>b.onclick=(e)=>{e.stopPropagation();openPaymentEditor(null,{invoiceId:b.dataset.payi});});
+  }
+}
+function openReceiptViewer(id){
+  const r=byId(DB.receipts,id);if(!r)return;
+  modal({title:'Receipt '+r.number,sub:esc(r.seller.brandName),size:'wide',
+    body:`<div class="btn-row doc-actions no-print" style="margin-bottom:14px">
+        <button class="btn" id="rPrint">${icon('print',15)}Print / PDF</button>
+        <button class="btn" id="rSend">${icon('share',15)}Send</button>
+        <button class="btn" id="rDl">${icon('dl',15)}Download</button></div>
+      <div class="doc-scroll" id="rcptPaper"></div>`,
+    onMount:(b,close)=>{
+      $('#rcptPaper').innerHTML=renderReceiptDoc(r);
+      const html=()=>$('#rcptPaper .paper').outerHTML;
+      $('#rPrint').onclick=()=>printDoc(html());
+      $('#rDl').onclick=()=>{downloadFile(r.number+'.html',standaloneDoc('Receipt '+r.number,html()));toast('Downloaded');};
+      $('#rSend').onclick=()=>{
+        const c=r.customerSnap;const ctx={seller:r.seller,currency:r.currency,number:r.number,invoiceNumber:r.invoiceNumber,
+          customerName:c?c.name:'',amountMinor:r.amountMinor,cumulativePaidMinor:r.cumulativePaidMinor,balanceAfterMinor:r.balanceAfterMinor};
+        const msg=composeMessage('receipt',ctx);
+        modal({title:'Send receipt '+r.number,size:'',
+          body:`<div class="frow c2"><div class="field"><label>Email</label><input class="inp" id="rTo" value="${esc(c?c.email:'')}"></div>
+            <div class="field"><label>Phone</label><input class="inp" id="rPhone" value="${esc(c?c.phone:'')}"></div></div>
+            <div class="field"><label>Subject</label><input class="inp" id="rSub" value="${esc(msg.subject)}"></div>
+            <div class="field"><label>Message</label><textarea class="inp" id="rBody" style="min-height:120px">${esc(msg.body)}</textarea></div>
+            <div class="field"><label>Text version</label><textarea class="inp" id="rSms" style="min-height:60px">${esc(msg.sms)}</textarea></div>`,
+          foot:`<div class="spacer"></div><button class="btn" id="rCopy">${icon('copy',15)}Copy</button><button class="btn" id="rSms2">${icon('sms',15)}Text</button><button class="btn primary" id="rMail">${icon('mail',15)}Email</button>`,
+          onMount:(bb,cl)=>{$('#rMail').onclick=()=>{openMail($('#rTo').value,$('#rSub').value,$('#rBody').value);toast('Opening email…');cl();};
+            $('#rSms2').onclick=()=>{openSms($('#rPhone').value,$('#rSms').value);cl();};$('#rCopy').onclick=()=>copyText($('#rBody').value);}});
+      };
+    }});
+}
+
+/* ========================= CREDIT NOTES ========================= */
+function openCreditNote(inv,cb){
+  const p=P();const pos=invoicePosition(inv);const cur=inv.currency;
+  modal({title:'Credit note',sub:'Against invoice '+inv.number,size:'',
+    body:`<div class="help">${icon('info',16)}<div>A credit note reduces the balance on a paid or part-paid invoice without editing the issued document.</div></div>
+      <div class="kv" style="margin-bottom:14px"><dt>Invoice total</dt><dd class="money">${money(pos.totalMinor,cur)}</dd>
+        <dt>Current balance</dt><dd class="money">${money(pos.balanceMinor,cur)}</dd></div>
+      <div class="field"><label>Credit amount</label><div class="inp-group"><span class="pre">${ccy(cur).sym}</span><input class="inp right" id="cnAmt" value="${minorToStr(pos.balanceMinor,cur)}"></div></div>
+      <div class="field"><label>Reason</label><textarea class="inp" id="cnReason" placeholder="e.g. agreed discount, returned goods, correction"></textarea></div>`,
+    foot:`<div class="spacer"></div><button class="btn" id="cnCancel">Cancel</button><button class="btn primary" id="cnSave">Issue credit note</button>`,
+    onMount:(b,close)=>{$('#cnCancel').onclick=close;
+      $('#cnSave').onclick=()=>{const amt=toMinor($('#cnAmt').value,cur);if(amt<=0){toast('Enter an amount','err');return;}
+        const cn={id:uid('cn'),profileId:p.id,number:reserveNumber(p,'credit'),invoiceId:inv.id,customerId:inv.customerId,
+          amountMinor:amt,currency:cur,reason:$('#cnReason').value.trim(),status:'active',createdAt:nowISO()};
+        DB.credits.push(cn);audit('credit.note',cn.number+' · '+money(amt,cur),inv.id);
+        if(invoicePosition(inv).balanceMinor<=0)DB.messages.filter(m=>m.invoiceId===inv.id&&m.status==='pending').forEach(m=>m.status='cancelled');
+        commit();close();toast('Credit note '+cn.number+' issued');cb&&cb();};
+    }});
+}
+
+/* ========================= MESSAGES / REMINDERS ENGINE =========================
+   Server-side automatic dispatch needs a backend; here the engine computes
+   exactly what to send and when, queues it, revalidates balance at send time
+   (never sends a stale/overdue notice for a paid invoice), and hands each
+   message off through the device's email/SMS apps with one tap. */
+function queueMessage(msg){
+  DB.messages.unshift({id:uid('msg'),profileId:UI.profileId,status:'pending',createdAt:nowISO(),...msg});
+}
+function scheduleReminders(inv){
+  const p=P();const sched=p.reminderSchedule||[-3,0,3,7,14];
+  inv.reminderPlan=sched.map(offset=>({offset,date:addDays(inv.dueDate,offset),sent:false}));
+}
+// Recompute which reminders are now DUE (past their trigger date, invoice still owing)
+function refreshReminderQueue(){
+  const today=todayStr();
+  scoped(DB.invoices).filter(i=>i.lifecycle==='issued').forEach(inv=>{
+    const pos=invoicePosition(inv);
+    if(pos.payStatus==='paid'){return;} // never remind a paid invoice
+    (inv.reminderPlan||[]).forEach(step=>{
+      if(step.sent||step.queued)return;
+      if(step.date<=today){
+        step.queued=true;
+        const ds=dueState(inv);
+        queueMessage({type:'reminder',invoiceId:inv.id,customerId:inv.customerId,stepDate:step.date,
+          label:`${ds.state==='overdue'?ds.days+'d overdue':'Due reminder'} · ${inv.number} · ${money(pos.balanceMinor,inv.currency)}`});
+      }
+    });
+  });
+}
+function sendReminderNow(invId){
+  const inv=byId(DB.invoices,invId);if(!inv)return;
+  const pos=invoicePosition(inv);
+  if(pos.payStatus==='paid'){toast('Already paid — no reminder needed');return;}
+  const c=customer(inv.customerId);const p=inv.seller||snapshotSeller(P());const ds=dueState(inv);
+  const ctx={seller:p,currency:inv.currency,number:inv.number,dueDate:inv.dueDate,customerName:c?c.name:'',
+    balanceMinor:pos.balanceMinor,overdueDays:ds.state==='overdue'?ds.days:0};
+  const msg=composeMessage('reminder',ctx);
+  modal({title:'Send reminder',sub:inv.number+' · '+money(pos.balanceMinor,inv.currency)+(ds.state==='overdue'?' · '+ds.days+'d overdue':''),size:'',
+    body:`<div class="help">${icon('info',16)}<div>Balance rechecked just now: <b>${money(pos.balanceMinor,inv.currency)}</b> outstanding. This reminder reflects prior payments.</div></div>
+      <div class="frow c2"><div class="field"><label>Email</label><input class="inp" id="mTo" value="${esc(c?c.email:'')}"></div>
+        <div class="field"><label>Phone</label><input class="inp" id="mPhone" value="${esc(c?c.phone:'')}"></div></div>
+      <div class="field"><label>Subject</label><input class="inp" id="mSub" value="${esc(msg.subject)}"></div>
+      <div class="field"><label>Message</label><textarea class="inp" id="mBody" style="min-height:140px">${esc(msg.body)}</textarea></div>
+      <div class="field"><label>Text version</label><textarea class="inp" id="mSms" style="min-height:60px">${esc(msg.sms)}</textarea></div>`,
+    foot:`<div class="spacer"></div><button class="btn" id="mCopy">${icon('copy',15)}Copy</button><button class="btn" id="mSms2">${icon('sms',15)}Text</button><button class="btn primary" id="mMail">${icon('mail',15)}Email</button>`,
+    onMount:(b,close)=>{
+      const mark=()=>{markReminderSent(inv);};
+      $('#mMail').onclick=()=>{openMail($('#mTo').value,$('#mSub').value,$('#mBody').value);mark();toast('Opening email…');close();renderView();};
+      $('#mSms2').onclick=()=>{openSms($('#mPhone').value,$('#mSms').value);mark();toast('Opening messages…');close();renderView();};
+      $('#mCopy').onclick=()=>copyText($('#mBody').value);
+    }});
+}
+function markReminderSent(inv){
+  const today=todayStr();
+  (inv.reminderPlan||[]).forEach(s=>{if(!s.sent&&s.date<=today){s.sent=true;s.queued=false;s.sentAt=nowISO();}});
+  DB.messages.filter(m=>m.invoiceId===inv.id&&m.type==='reminder'&&m.status==='pending').forEach(m=>{m.status='sent';m.sentAt=nowISO();});
+  inv.delivery='sent';audit('reminder.sent',inv.number,inv.id);commit();
+}
+function renderMessages(v){
+  const p=P();
+  refreshReminderQueue();commit();
+  const msgs=DB.messages.filter(m=>m.profileId===p.id);
+  const pending=msgs.filter(m=>m.status==='pending');
+  const sent=msgs.filter(m=>m.status==='sent').slice(0,30);
+  v.innerHTML=`
+    <div class="page-head"><div><h1>Messages</h1><div class="sub">Receipts & reminders queued for ${esc(p.brandName)}</div></div>
+      <div class="spacer"></div><button class="btn" id="mRefresh">${icon('refresh',15)}Refresh queue</button></div>
+    <div class="help">${icon('info',16)}<div>Automatic server-side sending needs the cloud backend. Meanwhile this queue is your worklist: each item recomputes the live balance and hands off to your Mail or Messages app with one tap. Paid invoices drop out automatically.</div></div>
+    <div class="card pad" style="margin-bottom:16px"><h3 style="margin-bottom:12px">Queued to send (${pending.length})</h3>
+      ${pending.length?pending.map(m=>{const c=customer(m.customerId);const inv=m.invoiceId?byId(DB.invoices,m.invoiceId):null;
+        return `<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)">
+          <span class="badge ${m.type==='receipt'?'b-green':'b-amber'}">${m.type}</span>
+          <div style="flex:1;min-width:0"><b>${esc(c?c.name:'—')}</b> <div style="font-size:12px;color:var(--muted)">${esc(m.label||'')}</div></div>
+          ${m.type==='receipt'?`<button class="btn sm primary" data-openrcpt="${m.receiptId}">Send receipt</button>`:`<button class="btn sm primary" data-remind="${m.invoiceId}">Send reminder</button>`}
+          <button class="btn ghost sm" data-dismiss="${m.id}">${icon('x',15)}</button></div>`;}).join('')
+        :emptyState('check','Queue is clear','No receipts or reminders waiting. New payments and due dates will appear here.','')}
+    </div>
+    ${sent.length?`<div class="card pad"><h3 style="margin-bottom:12px">Recently sent</h3>
+      ${sent.map(m=>{const c=customer(m.customerId);return `<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px">
+        <span style="color:var(--faint)">${fmtDateTime(m.sentAt||m.createdAt)}</span><span class="badge b-gray">${m.type}</span>
+        <span>${esc(c?c.name:'')} · ${esc(m.label||'')}</span></div>`;}).join('')}</div>`:''}`;
+  $('#mRefresh').onclick=()=>{renderView();toast('Queue refreshed');};
+  $$('[data-remind]').forEach(b=>b.onclick=()=>sendReminderNow(b.dataset.remind));
+  $$('[data-openrcpt]').forEach(b=>b.onclick=()=>{const r=byId(DB.receipts,b.dataset.openrcpt);if(r){DB.messages.filter(m=>m.receiptId===r.id&&m.status==='pending').forEach(m=>{m.status='sent';m.sentAt=nowISO();});commit();openReceiptViewer(r.id);}});
+  $$('[data-dismiss]').forEach(b=>b.onclick=()=>{const m=byId(DB.messages,b.dataset.dismiss);if(m){m.status='dismissed';commit();renderView();}});
+}
+
+/* ========================= REPORTS ========================= */
+function renderReports(v){
+  const p=P();const cur=p.currency;const tab=UI.repTab;
+  v.innerHTML=`
+    <div class="page-head"><div><h1>Reports</h1><div class="sub">${esc(p.brandName)}${p.operatingAs?' · part of '+esc(p.legalName):''}</div></div>
+      <div class="spacer"></div><button class="btn" id="rExport">${icon('dl',15)}Export CSV</button></div>
+    <div class="pill-tabs">
+      <button class="${tab==='aging'?'on':''}" data-t="aging">AR aging</button>
+      <button class="${tab==='revenue'?'on':''}" data-t="revenue">Revenue</button>
+      <button class="${tab==='entity'?'on':''}" data-t="entity">Entity / brand</button>
+      <button class="${tab==='statements'?'on':''}" data-t="statements">Statements</button>
+    </div><div id="repBody"></div>`;
+  $('#rExport').onclick=exportCSV;
+  $$('.pill-tabs button').forEach(b=>b.onclick=()=>{UI.repTab=b.dataset.t;renderView();});
+  const host=$('#repBody');
+  if(tab==='aging')reportAging(host);
+  else if(tab==='revenue')reportRevenue(host);
+  else if(tab==='entity')reportEntity(host);
+  else reportStatements(host);
+}
+function reportAging(host){
+  const p=P();const cur=p.currency;
+  const invs=scoped(DB.invoices).filter(i=>i.lifecycle==='issued'&&invoicePosition(i).balanceMinor>0);
+  const rows={};
+  invs.forEach(i=>{const c=customer(i.customerId);const key=i.customerId;rows[key]=rows[key]||{name:c?c.name:'—',current:0,'1-30':0,'31-60':0,'61-90':0,'90+':0,total:0};
+    const pos=invoicePosition(i);const bk=agingBucket(i);rows[key][bk]+=pos.balanceMinor;rows[key].total+=pos.balanceMinor;});
+  const list=Object.values(rows).sort((a,b)=>b.total-a.total);
+  const tot={current:0,'1-30':0,'31-60':0,'61-90':0,'90+':0,total:0};
+  list.forEach(r=>Object.keys(tot).forEach(k=>tot[k]+=r[k]));
+  host.innerHTML=`<div class="card"><div class="tbl-wrap"><table class="data"><thead><tr>
+    <th>Customer</th><th class="r">Current</th><th class="r">1–30</th><th class="r">31–60</th><th class="r">61–90</th><th class="r">90+</th><th class="r">Total</th></tr></thead><tbody>
+    ${list.map(r=>`<tr><td><b>${esc(r.name)}</b></td><td class="r money">${money(r.current,cur)}</td><td class="r money">${money(r['1-30'],cur)}</td>
+      <td class="r money">${money(r['31-60'],cur)}</td><td class="r money">${money(r['61-90'],cur)}</td>
+      <td class="r money" style="color:${r['90+']>0?'var(--bad)':'inherit'}">${money(r['90+'],cur)}</td><td class="r money"><b>${money(r.total,cur)}</b></td></tr>`).join('')||'<tr><td colspan="7" class="empty">No outstanding balances</td></tr>'}
+    </tbody>${list.length?`<tfoot><tr style="font-weight:700;background:var(--wash)"><td>Total</td><td class="r money">${money(tot.current,cur)}</td><td class="r money">${money(tot['1-30'],cur)}</td><td class="r money">${money(tot['31-60'],cur)}</td><td class="r money">${money(tot['61-90'],cur)}</td><td class="r money">${money(tot['90+'],cur)}</td><td class="r money">${money(tot.total,cur)}</td></tr></tfoot>`:''}</table></div></div>`;
+}
+function reportRevenue(host){
+  const p=P();const cur=p.currency;
+  const paid=DB.payments.filter(pm=>pm.profileId===p.id&&(pm.status==='confirmed'||pm.status==='cleared'));
+  const byMonth={};let total=0;
+  paid.forEach(pm=>{const m=(pm.date||'').slice(0,7);byMonth[m]=(byMonth[m]||0)+pm.amountMinor;total+=pm.amountMinor;});
+  const invoiced=scoped(DB.invoices).filter(i=>i.lifecycle==='issued').reduce((s,i)=>s+invoicePosition(i).totalMinor,0);
+  const months=Object.entries(byMonth).sort();const maxM=Math.max(1,...Object.values(byMonth));
+  host.innerHTML=`<div class="grid g3" style="margin-bottom:16px">
+      <div class="stat accent"><div class="lbl">Collected (all time)</div><div class="val money">${money(total,cur)}</div></div>
+      <div class="stat"><div class="lbl">Invoiced (issued)</div><div class="val money">${money(invoiced,cur)}</div></div>
+      <div class="stat"><div class="lbl">Collection rate</div><div class="val">${invoiced>0?Math.round(total/invoiced*100):0}%</div></div></div>
+    <div class="card pad"><h3 style="margin-bottom:14px">Collections by month</h3>
+    ${months.length?months.map(([m,val])=>`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px"><span style="color:var(--muted)">${m}</span><b class="money">${money(val,cur)}</b></div><div class="progress"><i style="width:${Math.round(val/maxM*100)}%;background:var(--accent)"></i></div></div>`).join(''):'<div class="empty">No confirmed payments yet</div>'}</div>`;
+}
+function reportEntity(host){
+  const cur=P().currency;
+  // consolidated by legal entity, split by brand
+  const entities={};
+  DB.profiles.forEach(pr=>{
+    entities[pr.legalName]=entities[pr.legalName]||{legal:pr.legalName,brands:[],invoiced:0,collected:0,outstanding:0};
+    let inv=0,col=0,out=0;
+    DB.invoices.filter(i=>i.profileId===pr.id&&i.lifecycle==='issued').forEach(i=>{const pos=invoicePosition(i);inv+=pos.totalMinor;col+=pos.netPaidMinor;out+=pos.balanceMinor;});
+    entities[pr.legalName].brands.push({name:pr.brandName,accent:pr.accent,invoiced:inv,collected:col,outstanding:out,profileId:pr.id});
+    entities[pr.legalName].invoiced+=inv;entities[pr.legalName].collected+=col;entities[pr.legalName].outstanding+=out;
+  });
+  host.innerHTML=`<div class="warnbox">${icon('info',16)}<div>Amounts shown in each profile's own currency are summed nominally here. A true multi-currency consolidation needs exchange-rate records (Release 2).</div></div>
+    ${Object.values(entities).map(e=>`<div class="card pad" style="margin-bottom:14px">
+      <h3 style="margin-bottom:4px">${esc(e.legal)}</h3><div class="sub" style="color:var(--muted);font-size:12px;margin-bottom:14px">Consolidated${e.brands.length>1?' · '+e.brands.length+' brands':''}</div>
+      <div class="tbl-wrap"><table class="data"><thead><tr><th>Brand</th><th class="r">Invoiced</th><th class="r">Collected</th><th class="r">Outstanding</th></tr></thead><tbody>
+      ${e.brands.map(b=>`<tr><td><span class="dot" style="background:${b.accent}"></span> <b>${esc(b.name)}</b></td><td class="r money">${money(b.invoiced,cur)}</td><td class="r money">${money(b.collected,cur)}</td><td class="r money"><b>${money(b.outstanding,cur)}</b></td></tr>`).join('')}
+      ${e.brands.length>1?`<tr style="font-weight:700;background:var(--wash)"><td>Consolidated</td><td class="r money">${money(e.invoiced,cur)}</td><td class="r money">${money(e.collected,cur)}</td><td class="r money">${money(e.outstanding,cur)}</td></tr>`:''}
+      </tbody></table></div></div>`).join('')}`;
+}
+function reportStatements(host){
+  const p=P();
+  const custs=[...new Set(scoped(DB.invoices).map(i=>i.customerId))].map(id=>customer(id)).filter(Boolean);
+  host.innerHTML=`<div class="card pad"><h3 style="margin-bottom:12px">Customer statements</h3>
+    ${custs.length?`<p style="color:var(--muted);font-size:13px;margin-bottom:14px">Generate a statement of charges and payments for a customer in ${esc(p.brandName)}.</p>
+    <div class="tbl-wrap"><table class="data"><thead><tr><th>Customer</th><th class="r">Balance</th><th></th></tr></thead><tbody>
+    ${custs.map(c=>`<tr><td><b>${esc(c.name)}</b></td><td class="r money">${money(customerBalance(c.id),p.currency)}</td><td class="r"><button class="btn sm" data-stmt="${c.id}">${icon('doc',14)}Statement</button></td></tr>`).join('')}
+    </tbody></table></div>`:'<div class="empty">No customer activity in this profile yet</div>'}</div>`;
+  $$('[data-stmt]',host).forEach(b=>b.onclick=()=>openStatement(b.dataset.stmt));
+}
+function openStatement(cusId){
+  modal({title:'Statement',sub:esc(customer(cusId).name),size:'wide',
+    body:`<div class="btn-row doc-actions no-print" style="margin-bottom:14px">
+        <div class="field" style="margin:0"><label style="font-size:11px">From</label><input class="inp" type="date" id="stFrom" style="width:auto"></div>
+        <div class="field" style="margin:0"><label style="font-size:11px">To</label><input class="inp" type="date" id="stTo" value="${todayStr()}" style="width:auto"></div>
+        <button class="btn sm" id="stGo" style="align-self:flex-end">Apply</button>
+        <div class="spacer"></div>
+        <button class="btn" id="stPrint" style="align-self:flex-end">${icon('print',15)}Print</button>
+        <button class="btn" id="stDl" style="align-self:flex-end">${icon('dl',15)}Download</button></div>
+      <div class="doc-scroll" id="stPaper"></div>`,
+    onMount:(b,close)=>{
+      const draw=()=>{$('#stPaper').innerHTML=renderStatementDoc(cusId,$('#stFrom').value||'',$('#stTo').value||'');};
+      draw();$('#stGo').onclick=draw;
+      $('#stPrint').onclick=()=>printDoc($('#stPaper .paper').outerHTML);
+      $('#stDl').onclick=()=>downloadFile('statement.html',standaloneDoc('Statement',$('#stPaper .paper').outerHTML));
+    }});
+}
+/* ---- CSV export (formula-injection safe) ---- */
+function csvCell(v){v=String(v==null?'':v);if(/^[=+\-@]/.test(v))v="'"+v;if(/[",\n]/.test(v))v='"'+v.replace(/"/g,'""')+'"';return v;}
+function exportCSV(){
+  const p=P();const rows=[['Invoice','Date','Due','Customer','Currency','Total','Paid','Balance','Status']];
+  scoped(DB.invoices).filter(i=>i.lifecycle==='issued').forEach(i=>{const pos=invoicePosition(i);const c=customer(i.customerId);
+    rows.push([i.number,i.issueDate,i.dueDate,c?c.name:'',i.currency,minorToStr(pos.totalMinor,i.currency),minorToStr(pos.netPaidMinor,i.currency),minorToStr(pos.balanceMinor,i.currency),pos.payStatus]);});
+  const csv=rows.map(r=>r.map(csvCell).join(',')).join('\n');
+  downloadFile(p.brandName.replace(/\W+/g,'_')+'_invoices.csv',csv,'text/csv');
+  audit('export.csv',p.brandName);toast('CSV exported');
+}
+
+/* ========================= SETTINGS ========================= */
+function renderSettings(v){
+  const tab=UI.setTab;
+  v.innerHTML=`
+    <div class="page-head"><div><h1>Settings</h1><div class="sub">Profiles, numbering, backup & audit</div></div></div>
+    <div class="pill-tabs">
+      <button class="${tab==='profiles'?'on':''}" data-t="profiles">Billing profiles</button>
+      <button class="${tab==='backup'?'on':''}" data-t="backup">Backup & data</button>
+      <button class="${tab==='audit'?'on':''}" data-t="audit">Audit history</button>
+    </div><div id="setBody"></div>`;
+  $$('.pill-tabs button').forEach(b=>b.onclick=()=>{UI.setTab=b.dataset.t;renderView();});
+  const host=$('#setBody');
+  if(tab==='profiles')settingsProfiles(host);
+  else if(tab==='backup')settingsBackup(host);
+  else settingsAudit(host);
+}
+function settingsProfiles(host){
+  host.innerHTML=`<div class="grid g2">
+    ${DB.profiles.map(pr=>{const inv=DB.invoices.filter(i=>i.profileId===pr.id&&i.lifecycle==='issued').length;
+      return `<div class="card pad" style="border-left:4px solid ${pr.accent}">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          ${logoMarkup(pr,{size:40,radius:9,fontSize:16})}
+          <div style="flex:1"><b style="font-size:15px">${esc(pr.brandName)}</b>
+          <div style="font-size:12px;color:var(--muted)">${esc(pr.legalName)}${pr.operatingAs?' · o/a '+esc(pr.operatingAs):''}</div></div>
+          ${pr.status==='archived'?'<span class="badge b-amber">Archived</span>':'<span class="badge b-green">Active</span>'}</div>
+        <div class="kv" style="font-size:12px;margin-bottom:12px"><dt>Currency</dt><dd>${pr.currency}</dd><dt>Tax</dt><dd>${pr.taxLabel} ${pr.taxRate}%</dd><dt>Issued invoices</dt><dd>${inv}</dd><dt>Next invoice #</dt><dd>${nextNumber(pr,'invoice').full}</dd></div>
+        <div class="btn-row"><button class="btn sm" data-pedit="${pr.id}">${icon('edit',14)}Edit</button>
+          <button class="btn sm" data-pswitch="${pr.id}">Switch to</button></div></div>`;}).join('')}
+    </div>
+    <div class="card pad" style="margin-top:14px;text-align:center">
+      <p style="color:var(--muted);margin:0 0 10px">Add a new business or brand — no code changes required.</p>
+      <button class="btn primary" id="pAdd">${icon('plus',15)}New billing profile</button></div>`;
+  $$('[data-pedit]',host).forEach(b=>b.onclick=()=>openProfileEditor(b.dataset.pedit));
+  $$('[data-pswitch]',host).forEach(b=>b.onclick=()=>switchProfile(b.dataset.pswitch));
+  $('#pAdd').onclick=()=>openProfileEditor(null);
+}
+function openProfileEditor(id){
+  const pr=id?profileById(id):{id:uid('prof'),status:'active',template:'consulting',accent:'#3b5bdb',logoText:'NB',
+    currency:'CAD',taxLabel:'HST',taxRate:13,reminderSchedule:[-3,0,3,7,14],
+    seq:{invoice:{prefix:'INV-',next:1001},receipt:{prefix:'RCT-',next:5001},estimate:{prefix:'EST-',next:2001},credit:{prefix:'CN-',next:9001},statement:{prefix:'ST-',next:1}}};
+  const isNew=!id;
+  const accents=['#3b5bdb','#0d9488','#2f9e44','#b8860b','#9c2c5b','#7048e8','#e8590c','#c0392b','#1c7ed6','#495057'];
+  modal({title:isNew?'New billing profile':'Edit profile',size:'wide',sticky:true,
+    body:`
+      <div class="warnbox">${icon('alert',16)}<div>Bank and payment details are profile-specific and must never leak between profiles. Issued documents keep their own snapshot and are unaffected by later edits.</div></div>
+      <div class="frow c2">
+        <div class="field"><label>Brand / trading name <span class="req">*</span></label><input class="inp" id="fBrand" value="${esc(pr.brandName||'')}"></div>
+        <div class="field"><label>Legal name <span class="req">*</span></label><input class="inp" id="fLegal" value="${esc(pr.legalName||'')}"></div></div>
+      <div class="frow c2">
+        <div class="field"><label>Operating as (o/a)</label><input class="inp" id="fOp" value="${esc(pr.operatingAs||'')}" placeholder="Shown as 'Legal, operating as Brand'"></div>
+        <div class="field"><label>Template</label><select class="inp" id="fTpl">${['consulting','logistics','grocers','commodity','garments'].map(t=>`<option value="${t}" ${pr.template===t?'selected':''}>${templateLabel(t)}</option>`).join('')}</select></div></div>
+      <div class="frow c4">
+        <div class="field"><label>Currency</label><select class="inp" id="fCur">${Object.keys(CURRENCIES).map(k=>`<option ${pr.currency===k?'selected':''}>${k}</option>`).join('')}</select></div>
+        <div class="field"><label>Tax label</label><input class="inp" id="fTaxL" value="${esc(pr.taxLabel||'')}"></div>
+        <div class="field"><label>Tax rate %</label><input class="inp right" id="fTaxR" value="${pr.taxRate||0}"></div>
+        <div class="field"><label>Logo initials</label><input class="inp" id="fLogo" value="${esc(pr.logoText||'')}" maxlength="3"></div></div>
+      <div class="field"><label>Accent colour</label><div style="display:flex;gap:8px;flex-wrap:wrap" id="fAccent">
+        ${accents.map(a=>`<button type="button" data-a="${a}" style="width:30px;height:30px;border-radius:8px;border:3px solid ${pr.accent===a?'#111':'transparent'};background:${a};cursor:pointer"></button>`).join('')}</div></div>
+      <div class="field"><label>Logo</label>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <div id="fLogoPrev">${logoMarkup(pr,{size:48,radius:10,fontSize:18})}</div>
+          <button type="button" class="btn sm" id="fLogoUp">${icon('plus',14)}Upload image</button>
+          <button type="button" class="btn sm" id="fLogoRm" style="${pr.logoImage?'':'display:none'}">Remove</button>
+          <input type="file" id="fLogoFile" accept="image/*" style="display:none">
+        </div>
+        <div class="hint">PNG, JPG or SVG. Appears on invoices, receipts and statements. Falls back to the coloured initials if no image is set.</div></div>
+      <div class="frow c2">
+        <div class="field"><label>Email</label><input class="inp" id="fEmail" value="${esc(pr.email||'')}"></div>
+        <div class="field"><label>Phone</label><input class="inp" id="fPhone" value="${esc(pr.phone||'')}"></div></div>
+      <div class="field"><label>Address</label><textarea class="inp" id="fAddr">${esc(pr.address||'')}</textarea></div>
+      <div class="frow c2">
+        <div class="field"><label>Tax / registration number</label><input class="inp" id="fTaxNo" value="${esc(pr.taxNo||'')}"></div>
+        <div class="field"><label>Website</label><input class="inp" id="fWeb" value="${esc(pr.website||'')}"></div></div>
+      <div class="field"><label>Payment instructions</label><textarea class="inp" id="fPay">${esc(pr.paymentInstructions||'')}</textarea></div>
+      <div class="field"><label>Default terms</label><textarea class="inp" id="fTerms">${esc(pr.terms||'')}</textarea></div>
+      <div class="field"><label>Authorized sender name</label><input class="inp" id="fSender" value="${esc(pr.authorizedSender||'')}"></div>
+      <hr class="sep"><h4 style="margin-bottom:10px">Numbering</h4>
+      <div class="frow c4">
+        <div class="field"><label>Invoice prefix</label><input class="inp" id="fInvP" value="${esc(pr.seq.invoice.prefix)}"></div>
+        <div class="field"><label>Next invoice #</label><input class="inp right" id="fInvN" value="${pr.seq.invoice.next}"></div>
+        <div class="field"><label>Receipt prefix</label><input class="inp" id="fRctP" value="${esc(pr.seq.receipt.prefix)}"></div>
+        <div class="field"><label>Next receipt #</label><input class="inp right" id="fRctN" value="${pr.seq.receipt.next}"></div></div>
+      <div class="field"><label>Reminder schedule (days relative to due date, comma-separated)</label>
+        <input class="inp" id="fRem" value="${(pr.reminderSchedule||[]).join(', ')}"><div class="hint">Negative = before due. e.g. -3, 0, 3, 7, 14, 30</div></div>`,
+    foot:`${!isNew?`<button class="btn" id="fArch">${pr.status==='archived'?'Reactivate':'Archive'}</button>`:''}<div class="spacer"></div>
+      <button class="btn" id="fCancel">Cancel</button><button class="btn primary" id="fSave">Save profile</button>`,
+    onMount:(b,close)=>{
+      let accent=pr.accent;let logoImage=pr.logoImage||null;
+      $$('#fAccent button').forEach(x=>x.onclick=()=>{accent=x.dataset.a;$$('#fAccent button').forEach(y=>y.style.borderColor='transparent');x.style.borderColor='#111';
+        if(!logoImage)$('#fLogoPrev').innerHTML=logoMarkup({logoText:$('#fLogo').value||($('#fBrand').value||'?')[0],accent},{size:48,radius:10,fontSize:18});});
+      $('#fLogoUp').onclick=()=>$('#fLogoFile').click();
+      $('#fLogoFile').onchange=e=>{const f=e.target.files&&e.target.files[0];fileToLogo(f,url=>{if(url){logoImage=url;
+        $('#fLogoPrev').innerHTML=logoMarkup({logoImage:url},{size:48,radius:10,fontSize:18});$('#fLogoRm').style.display='';toast('Logo added');}if(e.target)e.target.value='';});};
+      $('#fLogoRm').onclick=()=>{logoImage=null;$('#fLogoRm').style.display='none';
+        $('#fLogoPrev').innerHTML=logoMarkup({logoText:$('#fLogo').value||($('#fBrand').value||'?')[0],accent},{size:48,radius:10,fontSize:18});};
+      $('#fCancel').onclick=close;
+      const arch=$('#fArch');if(arch)arch.onclick=()=>{pr.status=pr.status==='archived'?'active':'archived';audit('profile.'+pr.status,pr.brandName);commit();close();renderShell();toast('Profile '+pr.status);};
+      $('#fSave').onclick=()=>{
+        const brand=$('#fBrand').value.trim(),legal=$('#fLegal').value.trim();
+        if(!brand||!legal){toast('Brand and legal name are required','err');return;}
+        Object.assign(pr,{brandName:brand,legalName:legal,operatingAs:$('#fOp').value.trim(),template:$('#fTpl').value,
+          currency:$('#fCur').value,taxLabel:$('#fTaxL').value.trim(),taxRate:num($('#fTaxR').value),logoText:$('#fLogo').value.trim()||brand[0],logoImage,
+          accent,email:$('#fEmail').value.trim(),phone:$('#fPhone').value.trim(),address:$('#fAddr').value.trim(),
+          taxNo:$('#fTaxNo').value.trim(),website:$('#fWeb').value.trim(),paymentInstructions:$('#fPay').value.trim(),
+          terms:$('#fTerms').value.trim(),authorizedSender:$('#fSender').value.trim(),tagline:pr.tagline||templateLabel($('#fTpl').value),
+          signature:legal});
+        pr.seq.invoice.prefix=$('#fInvP').value;pr.seq.invoice.next=parseInt($('#fInvN').value)||pr.seq.invoice.next;
+        pr.seq.receipt.prefix=$('#fRctP').value;pr.seq.receipt.next=parseInt($('#fRctN').value)||pr.seq.receipt.next;
+        pr.reminderSchedule=$('#fRem').value.split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));
+        if(isNew)DB.profiles.push(pr);
+        audit(isNew?'profile.create':'profile.update',brand);commit();close();
+        if(isNew)UI.profileId=pr.id;renderShell();toast('Profile saved');
+      };
+    }});
+}
+function settingsBackup(host){
+  const counts={Customers:DB.customers.length,Invoices:DB.invoices.length,Payments:DB.payments.length,Receipts:DB.receipts.length,Estimates:DB.estimates.length,Credits:DB.credits.length};
+  const installed=isStandalone();
+  const installCard=`
+    <div class="card pad" style="margin-bottom:14px">
+      <h3 style="margin-bottom:6px">Install as an app</h3>
+      ${installed?`<div class="help">${icon('check',16)}<div>Ledgerline is running as an installed app on this device.</div></div>`:`
+      <p style="color:var(--muted);font-size:13px;margin-bottom:12px">Ledgerline runs fully offline once loaded, and can live on your desktop and iPhone home screen.</p>
+      <div style="display:grid;gap:10px">
+        <div class="help" style="align-items:flex-start">${icon('info',16)}<div><b>iPhone / iPad</b><br>Open this page in <b>Safari</b>, tap the <b>Share</b> button, then <b>Add to Home Screen</b>. It launches full-screen with its own icon. (Add to Home Screen needs the page opened from a web address — see the note below.)</div></div>
+        <div class="help" style="align-items:flex-start">${icon('info',16)}<div><b>Desktop (Chrome / Edge)</b><br>Use the install icon in the address bar, or the button here when your browser offers it. You can also just keep the downloaded file and open it directly.<br><button class="btn sm primary" id="installBtn" style="display:${window.__installPrompt?'':'none'};margin-top:8px">${icon('dl',14)}Install app</button></div></div>
+        <div class="help" style="align-items:flex-start">${icon('info',16)}<div><b>To get it onto your phone</b>, host this single file at any web address — a free static host (e.g. Netlify Drop, GitHub Pages, Cloudflare Pages) works: upload <code>ledgerline.html</code>, open the resulting link in Safari, then Add to Home Screen. Your data stays on your device.</div></div>
+      </div>`}
+    </div>`;
+  host.innerHTML=installCard+`
+    <div class="card pad" style="margin-bottom:14px"><h3 style="margin-bottom:6px">Full backup</h3>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:14px">Download the entire workspace as a portable JSON file, or restore from one. Everything is stored locally on this device.</p>
+      <div class="grid g3" style="margin-bottom:16px">${Object.entries(counts).map(([k,n])=>`<div class="stat" style="padding:10px 12px"><div class="lbl">${k}</div><div class="val" style="font-size:20px">${n}</div></div>`).join('')}</div>
+      <div class="btn-row"><button class="btn primary" id="bkExport">${icon('dl',15)}Download backup</button>
+      <button class="btn" id="bkImport">${icon('refresh',15)}Restore from file</button>
+      <input type="file" id="bkFile" accept="application/json" style="display:none"></div></div>
+    <div class="card pad"><h3 style="margin-bottom:6px">Reset</h3>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:14px">Reload demo data or clear everything. This affects all profiles.</p>
+      <div class="btn-row"><button class="btn" id="bkDemo">Reload demo data</button>
+        <button class="btn danger" id="bkClear">Clear all data</button></div></div>`;
+  const ib=$('#installBtn');if(ib)ib.onclick=async()=>{const dp=window.__installPrompt;if(!dp){toast('Use your browser\u2019s install icon, or Add to Home Screen on iPhone');return;}dp.prompt();try{await dp.userChoice;}catch(e){}window.__installPrompt=null;ib.style.display='none';};
+  $('#bkExport').onclick=()=>{downloadFile('ledgerline_backup_'+todayStr()+'.json',JSON.stringify(DB,null,2),'application/json');audit('backup.export','');toast('Backup downloaded');};
+  $('#bkImport').onclick=()=>$('#bkFile').click();
+  $('#bkFile').onchange=(e)=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();
+    rd.onload=()=>{try{const data=JSON.parse(rd.result);if(!data.profiles)throw 0;
+      confirmModal('Restore backup','This replaces all current data with the backup file. Continue?',()=>{DB=data;UI.profileId=DB.profiles[0].id;commit();renderShell();toast('Backup restored');});}
+      catch(err){toast('Invalid backup file','err');}};rd.readAsText(f);};
+  $('#bkDemo').onclick=()=>confirmModal('Reload demo data','Replace current data with the demo dataset?',()=>{DB=freshDB(true);UI.profileId=DB.profiles[0].id;commit();renderShell();toast('Demo data loaded');});
+  $('#bkClear').onclick=()=>confirmModal('Clear all data','This permanently deletes every customer, invoice, payment and receipt on this device. This cannot be undone.',()=>{DB=freshDB(false);DB.customers=[];UI.profileId=DB.profiles[0].id;commit();renderShell();toast('All data cleared');},true);
+}
+function settingsAudit(host){
+  const log=DB.audit.slice(0,200);
+  host.innerHTML=`<div class="card pad"><h3 style="margin-bottom:6px">Audit history</h3>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:14px">Append-only record of material actions. Financial events are never erased — corrections are new events.</p>
+    ${log.length?`<div class="timeline">${log.map(a=>`<div class="tl-item"><div class="tl-time">${fmtDateTime(a.at)} · ${esc(a.actor)}${a.profileId?' · '+esc((profileById(a.profileId)||{}).brandName||''):''}</div>
+      <div class="tl-txt"><b>${esc(a.action)}</b> ${esc(a.detail||'')}</div></div>`).join('')}</div>`:'<div class="empty">No audit events yet</div>'}</div>`;
+}
+
+/* ========================= PWA / INSTALL ========================= */
+function makeAppIcon(size){
+  const cv=document.createElement('canvas');cv.width=cv.height=size;const x=cv.getContext('2d');
+  x.fillStyle='#12161f';
+  if(x.roundRect){x.beginPath();x.roundRect(0,0,size,size,size*0.22);x.fill();}else{x.fillRect(0,0,size,size);}
+  x.fillStyle='#eef2ff';x.font='bold '+Math.round(size*0.58)+'px -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif';
+  x.textAlign='center';x.textBaseline='middle';x.fillText('L',size*0.5,size*0.50);
+  x.strokeStyle='#3b5bdb';x.lineWidth=Math.max(2,size*0.055);x.lineCap='round';
+  x.beginPath();x.moveTo(size*0.35,size*0.72);x.lineTo(size*0.68,size*0.72);x.stroke();
+  try{return cv.toDataURL('image/png');}catch(e){return '';}
+}
+function setupPWA(){
+  try{
+    // If a real manifest file is already linked (hosted bundle), leave everything to it.
+    if(document.querySelector('link[rel="manifest"]'))return;
+    const i180=makeAppIcon(180),i192=makeAppIcon(192),i512=makeAppIcon(512);
+    let al=document.querySelector('link[rel="apple-touch-icon"]');
+    if(!al){al=document.createElement('link');al.rel='apple-touch-icon';document.head.appendChild(al);al.href=i180;}
+    let fav=document.querySelector('link[rel="icon"]');
+    if(!fav){fav=document.createElement('link');fav.rel='icon';document.head.appendChild(fav);fav.href=i192;}
+    const manifest={name:'Ledgerline',short_name:'Ledgerline',description:'Multi-business invoicing & receivables',
+      start_url:'./',scope:'./',display:'standalone',background_color:'#0e1117',theme_color:'#12161f',
+      icons:[{src:i192,sizes:'192x192',type:'image/png',purpose:'any maskable'},
+             {src:i512,sizes:'512x512',type:'image/png',purpose:'any maskable'}]};
+    const url=URL.createObjectURL(new Blob([JSON.stringify(manifest)],{type:'application/manifest+json'}));
+    const ml=document.createElement('link');ml.rel='manifest';ml.href=url;document.head.appendChild(ml);
+  }catch(e){/* icon/canvas unavailable — app still runs */}
+}
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();window.__installPrompt=e;
+  const b=document.querySelector('#installBtn');if(b){b.style.display='';}});
+function isStandalone(){return window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;}
+function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
+
+/* ========================= BOOT ========================= */
+async function boot(){
+  setupPWA();
+  if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  }
+  DB=await Storage.load();
+  if(!DB||!DB.profiles){DB=freshDB(true);await Storage.save(DB);}
+  // migrate: ensure arrays exist
+  ['customers','catalog','estimates','invoices','payments','receipts','credits','refunds','writeoffs','messages','audit','attachments'].forEach(k=>{if(!DB[k])DB[k]=[];});
+  UI.profileId=DB.profiles[0].id;
+  renderShell();
+  // refresh reminder queue on load
+  refreshReminderQueue();commit();
+}
+window.addEventListener('DOMContentLoaded',boot);
+if(document.readyState!=='loading')boot();
+</script>
+</body>
+</html>
